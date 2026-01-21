@@ -1,0 +1,2 @@
+com.gitlab.neton.framework.quartz.config.NetonQuartzAutoConfiguration
+com.gitlab.neton.framework.quartz.config.NetonAsyncAutoConfiguration

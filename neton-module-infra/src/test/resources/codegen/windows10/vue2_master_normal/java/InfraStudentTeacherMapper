@@ -1,0 +1,28 @@
+package com.gitlab.neton.module.infra.dal.mysql.demo;
+
+import java.util.*;
+
+import com.gitlab.neton.framework.common.pojo.PageResult;
+import com.gitlab.neton.framework.common.pojo.PageParam;
+import com.gitlab.neton.framework.mybatis.core.query.LambdaQueryWrapperX;
+import com.gitlab.neton.framework.mybatis.core.mapper.BaseMapperX;
+import com.gitlab.neton.module.infra.dal.dataobject.demo.InfraStudentTeacherDO;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * 学生班主任 Mapper
+ *
+ * @author Neton
+ */
+@Mapper
+public interface InfraStudentTeacherMapper extends BaseMapperX<InfraStudentTeacherDO> {
+
+    default InfraStudentTeacherDO selectByStudentId(Long studentId) {
+        return selectOne(InfraStudentTeacherDO::getStudentId, studentId);
+    }
+
+    default int deleteByStudentId(Long studentId) {
+        return delete(InfraStudentTeacherDO::getStudentId, studentId);
+    }
+
+}

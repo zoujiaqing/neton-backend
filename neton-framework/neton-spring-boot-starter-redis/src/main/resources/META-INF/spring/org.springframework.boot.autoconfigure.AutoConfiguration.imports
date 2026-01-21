@@ -1,0 +1,2 @@
+com.gitlab.neton.framework.redis.config.NetonRedisAutoConfiguration
+com.gitlab.neton.framework.redis.config.NetonCacheAutoConfiguration

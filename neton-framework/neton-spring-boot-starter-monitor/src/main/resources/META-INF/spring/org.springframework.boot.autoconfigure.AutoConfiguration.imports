@@ -1,0 +1,2 @@
+com.gitlab.neton.framework.tracer.config.NetonTracerAutoConfiguration
+com.gitlab.neton.framework.tracer.config.NetonMetricsAutoConfiguration

@@ -1,0 +1,30 @@
+package com.gitlab.neton.module.infra.dal.mysql.demo;
+
+import java.util.*;
+
+import com.gitlab.neton.framework.common.pojo.PageResult;
+import com.gitlab.neton.framework.mybatis.core.query.LambdaQueryWrapperX;
+import com.gitlab.neton.framework.mybatis.core.mapper.BaseMapperX;
+import com.gitlab.neton.module.infra.dal.dataobject.demo.InfraStudentDO;
+import org.apache.ibatis.annotations.Mapper;
+import com.gitlab.neton.module.infra.controller.admin.demo.vo.*;
+
+/**
+ * 学生 Mapper
+ *
+ * @author Neton
+ */
+@Mapper
+public interface InfraStudentMapper extends BaseMapperX<InfraStudentDO> {
+
+    default PageResult<InfraStudentDO> selectPage(InfraStudentPageReqVO reqVO) {
+        return selectPage(reqVO, new LambdaQueryWrapperX<InfraStudentDO>()
+                .likeIfPresent(InfraStudentDO::getName, reqVO.getName())
+                .eqIfPresent(InfraStudentDO::getBirthday, reqVO.getBirthday())
+                .eqIfPresent(InfraStudentDO::getSex, reqVO.getSex())
+                .eqIfPresent(InfraStudentDO::getEnabled, reqVO.getEnabled())
+                .betweenIfPresent(InfraStudentDO::getCreateTime, reqVO.getCreateTime())
+                .orderByDesc(InfraStudentDO::getId));
+    }
+
+}

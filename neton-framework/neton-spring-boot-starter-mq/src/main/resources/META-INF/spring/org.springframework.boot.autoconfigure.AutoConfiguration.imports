@@ -1,0 +1,3 @@
+com.gitlab.neton.framework.mq.redis.config.NetonRedisMQProducerAutoConfiguration
+com.gitlab.neton.framework.mq.redis.config.NetonRedisMQConsumerAutoConfiguration
+com.gitlab.neton.framework.mq.rabbitmq.config.NetonRabbitMQAutoConfiguration

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>com.gitlab.neton</groupId>
+        <artifactId>neton-module-mall</artifactId>
+        <version>${revision}</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>jar</packaging>
+    <artifactId>neton-module-promotion</artifactId>
+
+    <name>${project.artifactId}</name>
+
+    <description>
+        promotion 模块，主要实现营销相关功能
+        例如：营销活动、banner 广告、优惠券、优惠码等功能。
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-module-product</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-module-trade-api</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-module-system</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-module-infra</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-module-member</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 业务组件 -->
+
+        <!-- Web 相关 -->
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- DB 相关 -->
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-spring-boot-starter-mybatis</artifactId>
+        </dependency>
+
+        <!-- Test 测试相关 -->
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-spring-boot-starter-test</artifactId>
+        </dependency>
+
+        <!-- 工具类相关 -->
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-spring-boot-starter-excel</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

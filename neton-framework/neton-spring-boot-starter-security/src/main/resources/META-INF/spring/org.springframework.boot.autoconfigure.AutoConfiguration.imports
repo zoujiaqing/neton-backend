@@ -1,0 +1,3 @@
+com.gitlab.neton.framework.security.config.NetonSecurityAutoConfiguration
+com.gitlab.neton.framework.security.config.NetonWebSecurityConfigurerAdapter
+com.gitlab.neton.framework.operatelog.config.NetonOperateLogConfiguration

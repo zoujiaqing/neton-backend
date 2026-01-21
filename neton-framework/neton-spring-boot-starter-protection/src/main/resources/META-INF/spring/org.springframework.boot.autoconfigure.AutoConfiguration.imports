@@ -1,0 +1,4 @@
+com.gitlab.neton.framework.idempotent.config.NetonIdempotentConfiguration
+com.gitlab.neton.framework.lock4j.config.NetonLock4jConfiguration
+com.gitlab.neton.framework.ratelimiter.config.NetonRateLimiterConfiguration
+com.gitlab.neton.framework.signature.config.NetonApiSignatureAutoConfiguration

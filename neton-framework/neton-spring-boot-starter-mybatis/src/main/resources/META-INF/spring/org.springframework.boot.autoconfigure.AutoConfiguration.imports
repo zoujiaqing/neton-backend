@@ -1,0 +1,3 @@
+com.gitlab.neton.framework.datasource.config.NetonDataSourceAutoConfiguration
+com.gitlab.neton.framework.mybatis.config.NetonMybatisAutoConfiguration
+com.gitlab.neton.framework.translate.config.NetonTranslateAutoConfiguration

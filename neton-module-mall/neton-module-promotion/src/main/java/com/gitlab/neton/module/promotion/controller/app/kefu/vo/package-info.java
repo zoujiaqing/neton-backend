@@ -1,0 +1,1 @@
+package com.gitlab.neton.module.promotion.controller.app.kefu.vo;

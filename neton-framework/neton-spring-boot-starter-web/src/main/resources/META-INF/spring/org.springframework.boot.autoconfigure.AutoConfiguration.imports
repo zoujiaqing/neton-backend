@@ -1,0 +1,7 @@
+com.gitlab.neton.framework.apilog.config.NetonApiLogAutoConfiguration
+com.gitlab.neton.framework.jackson.config.NetonJacksonAutoConfiguration
+com.gitlab.neton.framework.swagger.config.NetonSwaggerAutoConfiguration
+com.gitlab.neton.framework.web.config.NetonWebAutoConfiguration
+com.gitlab.neton.framework.xss.config.NetonXssAutoConfiguration
+com.gitlab.neton.framework.banner.config.NetonBannerAutoConfiguration
+com.gitlab.neton.framework.encrypt.config.NetonApiEncryptAutoConfiguration

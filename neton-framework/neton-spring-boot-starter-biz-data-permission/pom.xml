@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>neton-framework</artifactId>
+        <groupId>com.gitlab.neton</groupId>
+        <version>${revision}</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>neton-spring-boot-starter-biz-data-permission</artifactId>
+    <packaging>jar</packaging>
+
+    <name>${project.artifactId}</name>
+    <description>数据权限</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-common</artifactId>
+        </dependency>
+
+        <!-- Web 相关 -->
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-spring-boot-starter-security</artifactId>
+            <optional>true</optional> <!-- 可选，如果使用 DeptDataPermissionRule 必须提供 -->
+        </dependency>
+
+        <!-- DB 相关 -->
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-spring-boot-starter-mybatis</artifactId>
+        </dependency>
+
+        <!-- Test 测试相关 -->
+        <dependency>
+            <groupId>com.gitlab.neton</groupId>
+            <artifactId>neton-spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

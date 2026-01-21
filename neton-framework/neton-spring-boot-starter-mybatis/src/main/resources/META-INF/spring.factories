@@ -1,0 +1,2 @@
+org.springframework.boot.env.EnvironmentPostProcessor=\
+  com.gitlab.neton.framework.mybatis.config.IdTypeEnvironmentPostProcessor

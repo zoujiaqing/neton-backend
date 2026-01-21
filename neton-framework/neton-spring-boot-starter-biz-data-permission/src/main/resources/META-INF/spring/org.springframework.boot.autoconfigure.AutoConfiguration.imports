@@ -1,0 +1,2 @@
+com.gitlab.neton.framework.datapermission.config.NetonDataPermissionAutoConfiguration
+com.gitlab.neton.framework.datapermission.config.NetonDeptDataPermissionAutoConfiguration
