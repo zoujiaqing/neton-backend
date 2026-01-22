@@ -1,4 +1,4 @@
-# 开放平台模块设计方案（独立模块 + 计费系统）v3.1
+# 开放平台模块设计方案（独立模块 + 计费系统）v4.0
 
 ## 一、模块架构
 
@@ -6,12 +6,12 @@
 
 **neton-module-platform**：独立的开放平台模块
 
-- ✅ 与 system/member/pay 等模块平级
-- ✅ 独立的数据库表（platform_ 前缀）
-- ✅ 独立的业务逻辑
-- ✅ 支持客户端授权管理
-- ✅ 支持 API 计费系统 ⭐
-- ✅ 可独立部署（未来微服务化）
+- 与 system/member/pay 等模块平级
+- 独立的数据库表（platform_ 前缀）
+- 独立的业务逻辑
+- 支持客户端授权管理
+- 支持 API 计费系统 ⭐
+- 可独立部署（未来微服务化）
 
 ---
 
@@ -19,12 +19,14 @@
 
 **避免与 app-api 路由混淆**：
 
-| 旧命名 | 新命名 | 说明 |
-|-------|--------|------|
-| ~~platform_app~~ | **platform_client** | ✅ 客户端应用表 |
-| ~~app_id~~ | **client_id** | ✅ 客户端唯一标识（符合 OAuth2 标准） |
-| ~~app_secret~~ | **client_secret** | ✅ 客户端密钥 |
-| ~~PlatformAppDO~~ | **PlatformClientDO** | ✅ 客户端实体类 |
+| 命名 | 说明 |
+|------|------|
+| **platform_client** | 客户端应用表 |
+| **client_id** | 客户端唯一标识（符合 OAuth2 标准） |
+| **client_secret** | 客户端密钥 |
+| **PlatformClientDO** | 客户端实体类 |
+
+**设计原则**：采用 `client_id` + `client_secret` 命名（符合 OAuth2/OpenID Connect 标准），避免与系统内的 `app-api` 路由组产生混淆。
 
 ---
 
@@ -462,41 +464,9 @@ sign = hmac_sha256(签名原文, client_secret)
 
 ---
 
-## 四、命名映射表 ⭐
+## 四、请求示例
 
-### 4.1 数据库表命名
-
-| 旧命名（v2.0） | 新命名（v3.0）⭐ | 说明 |
-|--------------|----------------|------|
-| platform_app | platform_client | 客户端应用表 |
-| platform_app_api | platform_client_api | 客户端-API 授权关系表 |
-
-### 4.2 字段命名
-
-| 旧命名 | 新命名 ⭐ | 说明 |
-|-------|---------|------|
-| app_id | client_id | 客户端唯一标识（符合 OAuth2 标准） |
-| app_secret | client_secret | 客户端密钥 |
-| app_name | client_name | 客户端名称 |
-| app_code | client_code | 客户端编码 |
-| app_logo | client_logo | 客户端Logo |
-| app_type | client_type | 客户端类型 |
-
-### 4.3 Java 类命名
-
-| 旧命名 | 新命名 ⭐ | 说明 |
-|-------|---------|------|
-| PlatformAppDO | PlatformClientDO | 客户端实体 |
-| PlatformAppMapper | PlatformClientMapper | 客户端 Mapper |
-| PlatformAppService | PlatformClientService | 客户端服务 |
-| PlatformAppController | PlatformClientController | 客户端 Controller |
-| PlatformAppApiDO | PlatformClientApiDO | 授权关系实体 |
-
----
-
-## 五、请求示例
-
-### 5.1 完整的 HTTP 请求
+### 4.1 完整的 HTTP 请求
 
 ```http
 POST /open-api/order/create HTTP/1.1
@@ -515,9 +485,9 @@ X-Sign: 3a8f5e7d9b2c1a4f6e8d7c5b3a9f1e2d4c6b8a7f5e3d1c9b7a5f3e1d9c7b5a3f
 
 ---
 
-## 六、计费定价逻辑
+## 五、计费定价逻辑
 
-### 6.1 定价优先级
+### 5.1 定价优先级
 
 ```
 1. platform_client_api.is_custom_price = 1
@@ -527,7 +497,7 @@ X-Sign: 3a8f5e7d9b2c1a4f6e8d7c5b3a9f1e2d4c6b8a7f5e3d1c9b7a5f3e1d9c7b5a3f
    → 使用 platform_api.default_price（默认价格）
 ```
 
-### 6.2 定价示例
+### 5.2 定价示例
 
 | API | 默认价格 | 客户端A（VIP） | 客户端B（普通） |
 |-----|---------|--------------|---------------|
@@ -535,7 +505,7 @@ X-Sign: 3a8f5e7d9b2c1a4f6e8d7c5b3a9f1e2d4c6b8a7f5e3d1c9b7a5f3e1d9c7b5a3f
 | /product/list | 2分/次 | **1分/次** ✅ | 2分/次 |
 | /user/query | 免费 | 免费 | 免费 |
 
-### 6.3 数据库配置
+### 5.3 数据库配置
 
 ```sql
 -- 1. API 定义（默认价格）
@@ -553,9 +523,9 @@ VALUES ('client_B', 1, 0, NULL);  -- 使用默认10分
 
 ---
 
-## 七、标准通用字段说明 ⭐
+## 六、标准通用字段说明 ⭐
 
-### 7.1 所有表必须包含的字段
+### 6.1 所有表必须包含的字段
 
 ```sql
 -- 审计字段（标准格式）
@@ -566,7 +536,7 @@ VALUES ('client_B', 1, 0, NULL);  -- 使用默认10分
 `deleted` bit(1) NOT NULL DEFAULT b'0' COMMENT '是否删除'
 ```
 
-### 7.2 字段说明
+### 6.2 字段说明
 
 | 字段 | 类型 | 默认值 | 说明 |
 |-----|------|--------|------|
@@ -578,125 +548,125 @@ VALUES ('client_B', 1, 0, NULL);  -- 使用默认10分
 
 ---
 
-## 八、实施步骤
+## 七、实施步骤
 
 ### Phase 1：创建模块骨架（1 小时）
 
-1. ✅ 创建 `neton-module-platform` 目录
-2. ✅ 创建 `pom.xml`
-3. ✅ 创建包结构（client/api/charge/log）
-4. ✅ 父 pom 引入模块
-5. ✅ Server 引入依赖
+1. 创建 `neton-module-platform` 目录
+2. 创建 `pom.xml`
+3. 创建包结构（client/api/charge/log）
+4. 父 pom 引入模块
+5. Server 引入依赖
 
 ---
 
 ### Phase 2：数据库设计（2 小时）
 
-1. ✅ 创建 SQL 脚本：`sql/mysql/platform.sql`
-2. ✅ 创建 5 张核心表（使用新命名）⭐：
+1. 创建 SQL 脚本：`sql/mysql/platform.sql`
+2. 创建 5 张核心表：
    - `platform_client`（客户端表）
    - `platform_api`（API 定义表）
    - `platform_client_api`（授权关系表）
    - `platform_charge_record`（计费记录表）
    - `platform_log`（调用日志表）
-3. ✅ 所有表包含标准通用字段
-4. ✅ 执行 SQL 脚本
+3. 所有表包含标准通用字段
+4. 执行 SQL 脚本
 
 ---
 
 ### Phase 3：框架层扩展（1 小时）
 
-1. ✅ 扩展 `UserTypeEnum`（增加 OPEN）
-2. ✅ 扩展 `WebProperties`（增加 openApi 配置）
-3. ✅ 扩展 `WebFrameworkUtils`（增加 /open-api 识别）
-4. ✅ 扩展 `NetonWebAutoConfiguration`（注册路由前缀）
+1. 扩展 `UserTypeEnum`（增加 OPEN）
+2. 扩展 `WebProperties`（增加 openApi 配置）
+3. 扩展 `WebFrameworkUtils`（增加 /open-api 识别）
+4. 扩展 `NetonWebAutoConfiguration`（注册路由前缀）
 
 ---
 
 ### Phase 4：Security 层实现（2 小时）
 
-1. ✅ 创建 `OpenApiSignatureFilter`
-2. ✅ 实现签名验证（使用 client_id + client_secret）⭐
-3. ✅ 实现 API 权限校验
-4. ✅ 注册 Filter
+1. 创建 `OpenApiSignatureFilter`
+2. 实现签名验证（使用 client_id + client_secret）
+3. 实现 API 权限校验
+4. 注册 Filter
 
 ---
 
 ### Phase 5：业务层实现（4 小时）
 
-1. ✅ 创建 DO/Mapper（使用新命名）⭐
-2. ✅ 实现客户端管理 Service
-3. ✅ 实现 API 管理 Service
-4. ✅ 实现计费服务 Service
-5. ✅ 实现日志记录 Service
+1. 创建 DO/Mapper
+2. 实现客户端管理 Service
+3. 实现 API 管理 Service
+4. 实现计费服务 Service
+5. 实现日志记录 Service
 
 ---
 
 ### Phase 6：Controller 层（2 小时）
 
-1. ✅ 实现 `PlatformClientController`（客户端管理）⭐
-2. ✅ 实现 `PlatformApiController`（API 管理）
-3. ✅ 实现 `PlatformChargeController`（计费管理）
-4. ✅ 实现 `PlatformLogController`（日志查询）
+1. 实现 `PlatformClientController`（客户端管理）
+2. 实现 `PlatformApiController`（API 管理）
+3. 实现 `PlatformChargeController`（计费管理）
+4. 实现 `PlatformLogController`（日志查询）
 
 ---
 
 ### Phase 7：测试与优化（2 小时）
 
-1. ✅ 单元测试
-2. ✅ 集成测试
-3. ✅ 性能测试
+1. 单元测试
+2. 集成测试
+3. 性能测试
 
 **预计总工作量：14-16 小时**
 
 ---
 
-## 九、架构优势总结
+## 八、架构优势总结
 
-### 9.1 命名优势 ⭐
-
-| 维度 | 优势 |
-|-----|------|
-| **避免混淆** | ✅ platform_client 不会和 app-api 路由混淆 |
-| **符合标准** | ✅ client_id + client_secret 符合 OAuth2 标准 |
-| **语义清晰** | ✅ 一眼看出是"客户端"而非"应用" |
-| **专业性** | ✅ 与行业惯例一致（OAuth2/OpenID Connect） |
-
-### 9.2 标准通用字段优势
+### 8.1 命名优势 ⭐
 
 | 维度 | 优势 |
 |-----|------|
-| **统一规范** | ✅ 与现有模块完全一致 |
-| **审计完整** | ✅ creator/updater 记录操作人 |
-| **逻辑删除** | ✅ deleted 字段支持软删除 |
-| **时间追溯** | ✅ create_time/update_time 完整记录 |
+| **避免混淆** | platform_client 不会和 app-api 路由混淆 |
+| **符合标准** | client_id + client_secret 符合 OAuth2 标准 |
+| **语义清晰** | 一眼看出是"客户端"而非"应用" |
+| **专业性** | 与行业惯例一致（OAuth2/OpenID Connect） |
+
+### 8.2 标准通用字段优势
+
+| 维度 | 优势 |
+|-----|------|
+| **统一规范** | 与现有模块完全一致 |
+| **审计完整** | creator/updater 记录操作人 |
+| **逻辑删除** | deleted 字段支持软删除 |
+| **时间追溯** | create_time/update_time 完整记录 |
 
 ---
 
-## 十、总结
+## 九、总结
 
 ### 核心设计亮点 ⭐
 
-1. **规范的命名** ✅
+1. **规范的命名**
    - `platform_client`（避免和 app-api 混淆）
    - `client_id` + `client_secret`（符合 OAuth2 标准）
 
-2. **标准的通用字段** ✅
+2. **标准的通用字段**
    - 完全对齐现有模块的字段格式
    - 支持审计、逻辑删除
 
-3. **完整的授权体系** ✅
+3. **完整的授权体系**
    - 客户端 ↔ API 多对多关系
    - 支持时间范围授权
    - 支持自定义配额
 
-4. **灵活的计费系统** ✅
+4. **灵活的计费系统**
    - 默认价格（API 级别）
    - 自定义价格（客户端-API 级别）
    - 所有金额单位：分
    - 完整的计费审计
 
-5. **生产级设计** ✅
+5. **生产级设计**
    - 余额管理 + 预警
    - 并发安全（乐观锁）
    - 计费失败隔离
@@ -704,10 +674,11 @@ VALUES ('client_B', 1, 0, NULL);  -- 使用默认10分
 
 ---
 
-**文档版本**: v3.1（标准命名 + 通用字段 - 已移除租户）  
+**文档版本**: v4.0（待实现的设计方案）  
 **最后更新**: 2024-01-23  
-**核心特性**: 规范命名 + 客户端管理 + API 授权 + 灵活定价 + 计费系统
-**变更说明**: 移除所有表的 tenant_id 字段（历史遗留问题，系统已不使用租户概念）
+**文档状态**: 规划设计阶段（尚未实施）  
+**核心特性**: 规范命名 + 客户端管理 + API 授权 + 灵活定价 + 计费系统  
+**设计说明**: 本文档是开放平台模块的完整设计方案，所有表结构、接口、业务逻辑均为待实现内容
 
 ---
 
