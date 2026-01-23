@@ -24,9 +24,26 @@
 | **platform_client** | 客户端应用表 |
 | **client_id** | 客户端唯一标识（符合 OAuth2 标准） |
 | **client_secret** | 客户端密钥 |
+| **api_code** | API 编码（权限标识：`platform:资源:操作`） |
 | **PlatformClientDO** | 客户端实体类 |
 
-**设计原则**：采用 `client_id` + `client_secret` 命名（符合 OAuth2/OpenID Connect 标准），避免与系统内的 `app-api` 路由组产生混淆。
+**设计原则**：
+- 采用 `client_id` + `client_secret` 命名（符合 OAuth2/OpenID Connect 标准），避免与系统内的 `app-api` 路由组产生混淆
+- `api_code` 采用权限标识格式（`platform:资源:操作`），与现有权限系统保持一致（如 `system:user:create`）
+
+**api_code 命名规范** ⭐：
+
+| 格式 | 示例 | 说明 |
+|-----|------|------|
+| `platform:资源:操作` | `platform:order:create` | 创建订单 |
+| `platform:资源:操作` | `platform:order:query` | 查询订单 |
+| `platform:资源:操作` | `platform:product:list` | 商品列表 |
+| `platform:资源:操作` | `platform:user:info` | 用户信息 |
+
+**与现有权限系统对比**：
+- 系统模块：`system:user:create`、`system:role:update`
+- 平台模块：`platform:order:create`、`platform:product:list`
+- 格式统一，便于权限管理和检查
 
 ---
 
@@ -170,6 +187,34 @@ CREATE TABLE `platform_client` (
 
 **职责**：定义所有可被开放平台调用的 API + 默认计费规则
 
+**设计原则**：⭐
+- 只有在此表中定义的 API 才能被调用（白名单第一层）
+- 客户端必须在 `platform_client_api` 中被明确授权才能访问（白名单第二层）
+- 不再需要 `is_public` 字段，所有 API 必须明确授权
+- **API 路径直接存储业务路径**：如 `/order/create`，适配多种访问方式（域名映射、路由前缀等）
+- **API 编码采用权限标识格式**：`platform:资源:操作`（如 `platform:order:create`），与权限系统保持一致
+
+**API 编码格式说明**：⭐
+
+```
+格式：platform:资源:操作
+示例：
+  - platform:order:create   (创建订单)
+  - platform:order:query    (查询订单)
+  - platform:product:list   (商品列表)
+  - platform:user:info      (用户信息)
+
+与现有权限系统对比：
+  - system:user:create    (系统用户创建)
+  - platform:order:create (平台订单创建)
+```
+
+**优势**：
+1. ✅ 与现有权限系统格式统一（`模块:资源:操作`）
+2. ✅ 可以直接用于权限检查 `@PreAuthorize("@ss.hasPermission('platform:order:create')")`
+3. ✅ 语义清晰，易于理解和管理
+4. ✅ 支持权限分组和批量管理
+
 ```sql
 DROP TABLE IF EXISTS `platform_api`;
 CREATE TABLE `platform_api` (
@@ -177,9 +222,9 @@ CREATE TABLE `platform_api` (
     `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'API ID',
     
     -- API 标识
-    `api_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'API 编码（唯一标识）',
+    `api_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'API 编码（权限标识格式：platform:资源:操作，如：platform:order:create）',
     `api_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'API 名称',
-    `api_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'API 路径（如：/open-api/order/create）',
+    `api_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'API 路径（业务路径，如：/order/create，不包含 /open-api 前缀）',
     `http_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'HTTP 方法（GET/POST/PUT/DELETE）',
     
     -- 分类与描述
@@ -188,7 +233,6 @@ CREATE TABLE `platform_api` (
     
     -- 状态
     `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0=停用 1=正常',
-    `is_public` bit(1) NOT NULL DEFAULT b'0' COMMENT '是否公开：0=需授权 1=公开（所有客户端可调用）',
     
     -- 限流配置（API 级别）
     `rate_limit_per_min` int NOT NULL DEFAULT 100 COMMENT '每分钟限流（次/分钟/客户端）',
@@ -218,6 +262,11 @@ CREATE TABLE `platform_api` (
 ### 2.3 客户端-API授权关系表（platform_client_api）⭐ 核心
 
 **职责**：客户端和 API 的多对多关系（权限控制 + 自定义定价核心）
+
+**白名单机制**：⭐
+- 只有在此表中存在授权记录的客户端才能访问对应的 API
+- 未授权的客户端一律拒绝访问（默认拒绝原则）
+- 授权记录必须满足：状态正常 + 在有效时间范围内
 
 ```sql
 DROP TABLE IF EXISTS `platform_client_api`;
@@ -405,7 +454,78 @@ CREATE TABLE `platform_stat` (
 
 ## 三、核心业务逻辑（含计费流程）
 
-### 3.1 计费服务（PlatformChargeService）⭐
+### 3.1 权限检查与 api_code ⭐
+
+**与现有权限系统集成**：
+
+```java
+// Controller 示例：可以直接使用 api_code 进行权限检查
+@RestController
+@RequestMapping("/open-api/order")
+public class PlatformOrderController {
+    
+    /**
+     * 创建订单（需要平台权限：platform:order:create）
+     */
+    @PostMapping("/create")
+    @PreAuthorize("@ss.hasPermission('platform:order:create')")
+    public CommonResult<Long> createOrder(@RequestBody OrderCreateReqVO reqVO) {
+        // 业务逻辑
+        return success(orderService.createOrder(reqVO));
+    }
+    
+    /**
+     * 查询订单（需要平台权限：platform:order:query）
+     */
+    @GetMapping("/query")
+    @PreAuthorize("@ss.hasPermission('platform:order:query')")
+    public CommonResult<OrderVO> queryOrder(@RequestParam String orderNo) {
+        // 业务逻辑
+        return success(orderService.queryOrder(orderNo));
+    }
+}
+```
+
+**权限校验流程**：
+
+```java
+// OpenApiSignatureFilter 中
+public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
+    // 1. 验证签名（client_id + client_secret）
+    validateSignature(request);
+    
+    // 2. 获取 API 信息
+    String apiPath = request.getRequestURI();
+    PlatformApiDO api = platformApiMapper.selectByPathAndMethod(apiPath, httpMethod);
+    
+    // 3. 检查客户端是否被授权（白名单机制）
+    boolean hasPermission = platformAuthService.hasApiPermission(clientId, api.getId());
+    if (!hasPermission) {
+        throw new ServiceException(PERMISSION_DENIED, "未授权访问 API: " + api.getApiCode());
+    }
+    
+    // 4. 将 api_code 存入 SecurityContext，供 @PreAuthorize 使用
+    // 这样可以统一使用 @PreAuthorize("@ss.hasPermission('platform:order:create')")
+    SecurityContextHolder.getContext().setAuthentication(
+        new OpenApiAuthentication(clientId, api.getApiCode())
+    );
+    
+    // 5. 计费（如需要）
+    chargeService.chargeForApiCall(clientId, api.getId(), traceId);
+    
+    chain.doFilter(request, response);
+}
+```
+
+**优势**：
+1. ✅ 与现有权限系统格式完全一致
+2. ✅ 可以使用 `@PreAuthorize` 注解进行权限控制
+3. ✅ 权限标识清晰易懂（`platform:order:create`）
+4. ✅ 支持权限分组管理（按模块、资源、操作）
+
+---
+
+### 3.2 计费服务（PlatformChargeService）⭐
 
 **核心方法**：
 
@@ -434,7 +554,7 @@ Long getChargePrice(String clientId, Long apiId, PlatformApiDO api);
 
 ---
 
-### 3.2 签名验证服务（PlatformAuthService）
+### 3.3 签名验证服务（PlatformAuthService）
 
 **请求 Header**：
 
@@ -464,12 +584,146 @@ sign = hmac_sha256(签名原文, client_secret)
 
 ---
 
+### 3.4 权限控制逻辑 ⭐
+
+**两层检查机制（白名单模式）**：
+
+```java
+/**
+ * API 权限校验流程（默认拒绝原则）
+ */
+public boolean hasApiPermission(String clientId, String apiPath, String httpMethod) {
+    // 第一层：API 是否在平台中定义
+    // apiPath 直接从请求中获取（如 /order/create）
+    PlatformApiDO api = platformApiMapper.selectByPathAndMethod(apiPath, httpMethod);
+    if (api == null) {
+        // API 未定义，拒绝访问
+        return false;
+    }
+    
+    // 检查 API 状态
+    if (api.getStatus() != 1) {
+        // API 已停用，拒绝访问
+        return false;
+    }
+    
+    // 第二层：客户端是否被授权访问该 API
+    PlatformClientApiDO clientApi = platformClientApiMapper.selectByClientIdAndApiId(clientId, api.getId());
+    if (clientApi == null) {
+        // 未授权，拒绝访问
+        return false;
+    }
+    
+    // 检查授权状态
+    if (clientApi.getStatus() != 1) {
+        // 授权已停用，拒绝访问
+        return false;
+    }
+    
+    // 检查授权时间范围
+    LocalDateTime now = LocalDateTime.now();
+    if (clientApi.getStartTime() != null && now.isBefore(clientApi.getStartTime())) {
+        // 授权未生效，拒绝访问
+        return false;
+    }
+    if (clientApi.getEndTime() != null && now.isAfter(clientApi.getEndTime())) {
+        // 授权已过期，拒绝访问
+        return false;
+    }
+    
+    // 通过所有检查，允许访问
+    return true;
+}
+```
+
+**权限控制原则**：
+
+| 场景 | 结果 | 说明 |
+|-----|------|------|
+| API 不在 `platform_api` 表中 | ❌ 拒绝 | API 未定义 |
+| API 状态为停用 | ❌ 拒绝 | API 已关闭 |
+| 客户端未在 `platform_client_api` 中授权 | ❌ 拒绝 | 未授权访问 ⭐ |
+| 授权状态为停用 | ❌ 拒绝 | 授权已撤销 |
+| 授权未到生效时间 | ❌ 拒绝 | 授权未生效 |
+| 授权已过期 | ❌ 拒绝 | 授权已过期 |
+| 通过所有检查 | ✅ 允许 | 正常访问 |
+
+**路径匹配逻辑**：⭐
+
+```java
+// 接收请求路径（可能来自多种方式）
+// 方式1: 域名映射 - api.xxx.com/order/create
+// 方式2: 路由前缀 - xxx.com/open-api/order/create
+String requestPath = request.getRequestURI();  // 例如: "/order/create"
+
+// 直接使用请求路径在 platform_api 表中查询
+PlatformApiDO api = platformApiMapper.selectByPathAndMethod(requestPath, "POST");
+```
+
+**为什么这样设计**：
+1. ✅ **适配多种访问方式**：域名映射（`api.xxx.com`）或路由前缀（`/open-api`）
+2. ✅ **数据库数据简洁**：只存储业务路径
+3. ✅ **灵活性更高**：部署方式改变不影响数据
+
+**访问方式示例**：
+
+| 访问方式 | 客户端请求 | 路径匹配 |
+|---------|----------|---------|
+| 域名映射 | `POST api.xxx.com/order/create` | `/order/create` ✅ |
+| 路由前缀 | `POST xxx.com/open-api/order/create` | 需去除前缀 `/open-api` |
+| 子路径 | `POST xxx.com/v1/order/create` | 需去除前缀 `/v1` |
+
+**推荐部署方式**：域名映射，客户端直接请求 `api.xxx.com/order/create`，服务端无需处理前缀。
+
+---
+
+**权限校验流程图**：
+
+```
+请求 /order/create (或 /open-api/order/create)
+    ↓
+[1] API 是否在 platform_api 中？
+    ├─ 否 → ❌ 返回 404 API_NOT_FOUND
+    └─ 是 → 继续
+    ↓
+[2] API 状态是否正常（status=1）？
+    ├─ 否 → ❌ 返回 403 API_DISABLED
+    └─ 是 → 继续
+    ↓
+[3] client_id 是否在 platform_client_api 中授权？
+    ├─ 否 → ❌ 返回 403 PERMISSION_DENIED（未授权）⭐
+    └─ 是 → 继续
+    ↓
+[4] 授权状态是否正常（status=1）？
+    ├─ 否 → ❌ 返回 403 PERMISSION_REVOKED
+    └─ 是 → 继续
+    ↓
+[5] 授权是否在有效时间范围内？
+    ├─ 否 → ❌ 返回 403 PERMISSION_EXPIRED
+    └─ 是 → 继续
+    ↓
+✅ 权限校验通过，允许访问
+```
+
+**设计优势**：
+
+1. **默认拒绝**：未明确授权的请求一律拒绝（安全第一）⭐
+2. **双重验证**：API 定义 + 客户端授权，两层保障
+3. **细粒度控制**：可以精确控制每个客户端对每个 API 的访问权限
+4. **灵活管理**：可以随时启用/停用 API 或授权关系
+5. **时间控制**：支持临时授权（开始时间 + 结束时间）
+6. **安全第一**：白名单机制，不存在"公开 API"的概念
+
+---
+
 ## 四、请求示例
 
 ### 4.1 完整的 HTTP 请求
 
+**方式1：域名映射（推荐）** ⭐
+
 ```http
-POST /open-api/order/create HTTP/1.1
+POST /order/create HTTP/1.1
 Host: api.example.com
 Content-Type: application/json
 X-Client-Id: client_123456
@@ -482,6 +736,27 @@ X-Sign: 3a8f5e7d9b2c1a4f6e8d7c5b3a9f1e2d4c6b8a7f5e3d1c9b7a5f3e1d9c7b5a3f
   "amount": 100
 }
 ```
+
+**方式2：路由前缀（可选）**
+
+```http
+POST /open-api/order/create HTTP/1.1
+Host: www.example.com
+Content-Type: application/json
+X-Client-Id: client_123456
+X-Timestamp: 1704700000
+X-Trace-Id: 550e8400-e29b-41d4-a716-446655440000
+X-Sign: 3a8f5e7d9b2c1a4f6e8d7c5b3a9f1e2d4c6b8a7f5e3d1c9b7a5f3e1d9c7b5a3f
+
+{
+  "order_no": "ORD20240108001",
+  "amount": 100
+}
+```
+
+**说明**：
+- 推荐使用域名映射方式（`api.example.com`），客户端调用更简洁
+- 使用路由前缀方式需要在框架层配置路由映射
 
 ---
 
@@ -505,21 +780,38 @@ X-Sign: 3a8f5e7d9b2c1a4f6e8d7c5b3a9f1e2d4c6b8a7f5e3d1c9b7a5f3e1d9c7b5a3f
 | /product/list | 2分/次 | **1分/次** ✅ | 2分/次 |
 | /user/query | 免费 | 免费 | 免费 |
 
-### 5.3 数据库配置
+### 5.3 数据库配置示例
 
 ```sql
--- 1. API 定义（默认价格）
-INSERT INTO platform_api (api_code, api_name, default_price) 
-VALUES ('order.create', '创建订单', 10);
+-- 1. 定义 API（默认价格）
+INSERT INTO platform_api (api_code, api_name, api_path, http_method, default_price, status) 
+VALUES ('platform:order:create', '创建订单', '/order/create', 'POST', 10, 1);
 
--- 2. 客户端A（自定义价格 - VIP）
-INSERT INTO platform_client_api (client_id, api_id, is_custom_price, custom_price)
-VALUES ('client_A', 1, 1, 5);  -- ✅ 自定义5分
+-- 2. 授权给客户端A（自定义价格 - VIP）⭐
+INSERT INTO platform_client_api (client_id, api_id, is_custom_price, custom_price, status)
+VALUES ('client_A', 1, 1, 5, 1);  -- ✅ 自定义5分，状态正常
 
--- 3. 客户端B（使用默认价格 - 普通）
-INSERT INTO platform_client_api (client_id, api_id, is_custom_price, custom_price)
-VALUES ('client_B', 1, 0, NULL);  -- 使用默认10分
+-- 3. 授权给客户端B（使用默认价格 - 普通）⭐
+INSERT INTO platform_client_api (client_id, api_id, is_custom_price, custom_price, status)
+VALUES ('client_B', 1, 0, NULL, 1);  -- 使用默认10分，状态正常
+
+-- 4. 未授权的客户端C ❌
+-- 客户端C 没有 platform_client_api 记录，因此无法调用任何 API
 ```
+
+**权限效果**：
+
+| 客户端 | 请求 API | 价格 | 说明 |
+|-------|---------|------|------|
+| client_A | /order/create | 5分/次 | ✅ 已授权，自定义价格 |
+| client_B | /order/create | 10分/次 | ✅ 已授权，默认价格 |
+| client_C | /order/create | - | ❌ 未授权（白名单机制）⭐ |
+| client_D | /order/create | - | ❌ 未授权（白名单机制）⭐ |
+
+**说明**：
+- API 路径存储格式：`/order/create`（业务路径）
+- 客户端请求可以是：`api.xxx.com/order/create` 或 `xxx.com/open-api/order/create`
+- 推荐使用域名映射方式，简化客户端调用
 
 ---
 
@@ -587,7 +879,10 @@ VALUES ('client_B', 1, 0, NULL);  -- 使用默认10分
 
 1. 创建 `OpenApiSignatureFilter`
 2. 实现签名验证（使用 client_id + client_secret）
-3. 实现 API 权限校验
+3. **实现 API 权限校验（白名单机制）** ⭐
+   - 检查 API 是否在 platform_api 中定义
+   - 检查客户端是否在 platform_client_api 中被授权
+   - 检查授权状态和时间范围
 4. 注册 Filter
 
 ---
@@ -632,7 +927,17 @@ VALUES ('client_B', 1, 0, NULL);  -- 使用默认10分
 | **语义清晰** | 一眼看出是"客户端"而非"应用" |
 | **专业性** | 与行业惯例一致（OAuth2/OpenID Connect） |
 
-### 8.2 标准通用字段优势
+### 8.2 权限控制优势 ⭐
+
+| 维度 | 优势 |
+|-----|------|
+| **白名单机制** | 默认拒绝，只有明确授权才能访问 |
+| **两层检查** | API 定义检查 + 客户端授权检查 |
+| **细粒度控制** | 精确控制每个客户端对每个 API 的访问 |
+| **时间维度** | 支持临时授权（开始时间 + 结束时间） |
+| **状态管理** | 可随时启用/停用 API 或授权关系 |
+
+### 8.3 标准通用字段优势
 
 | 维度 | 优势 |
 |-----|------|
@@ -657,6 +962,8 @@ VALUES ('client_B', 1, 0, NULL);  -- 使用默认10分
 
 3. **完整的授权体系**
    - 客户端 ↔ API 多对多关系
+   - **白名单机制**：默认拒绝，只有明确授权才能访问 ⭐
+   - **两层检查**：API 定义检查 + 客户端授权检查
    - 支持时间范围授权
    - 支持自定义配额
 
@@ -674,11 +981,11 @@ VALUES ('client_B', 1, 0, NULL);  -- 使用默认10分
 
 ---
 
-**文档版本**: v4.0（待实现的设计方案）  
+**文档版本**: v4.1（待实现的设计方案 - 白名单机制）  
 **最后更新**: 2024-01-23  
 **文档状态**: 规划设计阶段（尚未实施）  
-**核心特性**: 规范命名 + 客户端管理 + API 授权 + 灵活定价 + 计费系统  
-**设计说明**: 本文档是开放平台模块的完整设计方案，所有表结构、接口、业务逻辑均为待实现内容
+**核心特性**: 规范命名 + 客户端管理 + **白名单授权** + 灵活定价 + 计费系统  
+**设计说明**: 本文档是开放平台模块的完整设计方案，采用**白名单机制**（默认拒绝，明确授权才允许访问）
 
 ---
 
