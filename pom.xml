@@ -18,6 +18,7 @@
         <module>neton-module-member</module>
         <module>neton-module-mall</module>
         <module>neton-module-pay</module>
+        <module>neton-module-platform</module>
     </modules>
 
     <name>${project.artifactId}</name>
