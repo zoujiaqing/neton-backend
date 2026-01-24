@@ -193,7 +193,13 @@ CREATE TABLE `platform_charge_record` (
     
     -- 时间
     `charge_time` datetime NOT NULL COMMENT '扣费时间',
+    
+    -- 标准通用字段
+    `creator` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT '' COMMENT '创建者',
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updater` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT '' COMMENT '更新者',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted` bit(1) NOT NULL DEFAULT b'0' COMMENT '是否删除',
     
     PRIMARY KEY (`id`) USING BTREE,
     INDEX `idx_client_id_charge_time` (`client_id`, `charge_time`) USING BTREE,
@@ -246,7 +252,13 @@ CREATE TABLE `platform_log` (
     
     -- 时间
     `request_time` datetime NOT NULL COMMENT '请求时间（UTC）',
+    
+    -- 标准通用字段
+    `creator` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT '' COMMENT '创建者',
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updater` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT '' COMMENT '更新者',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted` bit(1) NOT NULL DEFAULT b'0' COMMENT '是否删除',
     
     PRIMARY KEY (`id`) USING BTREE,
     INDEX `idx_client_id_request_time` (`client_id`, `request_time`) USING BTREE,
@@ -282,9 +294,12 @@ CREATE TABLE `platform_stat` (
     `free_count` int NOT NULL DEFAULT 0 COMMENT '免费调用次数',
     `charged_count` int NOT NULL DEFAULT 0 COMMENT '计费调用次数',
     
-    -- 时间
+    -- 标准通用字段
+    `creator` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT '' COMMENT '创建者',
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updater` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT '' COMMENT '更新者',
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted` bit(1) NOT NULL DEFAULT b'0' COMMENT '是否删除',
     
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE KEY `uk_client_api_date` (`client_id`, `api_id`, `stat_date`) USING BTREE,
