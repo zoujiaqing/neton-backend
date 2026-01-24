@@ -23,9 +23,17 @@ public interface ApiMapper extends BaseMapperX<ApiDO> {
                 .likeIfPresent(ApiDO::getApiName, reqVO.getApiName())
                 .eqIfPresent(ApiDO::getCategory, reqVO.getCategory())
                 .eqIfPresent(ApiDO::getStatus, reqVO.getStatus())
-                .eqIfPresent(ApiDO::getIsPublic, reqVO.getIsPublic())
                 .betweenIfPresent(ApiDO::getCreateTime, reqVO.getCreateTime())
                 .orderByDesc(ApiDO::getId));
+    }
+
+    /**
+     * 根据 API 路径和方法查询
+     */
+    default ApiDO selectByPathAndMethod(String apiPath, String httpMethod) {
+        return selectOne(new LambdaQueryWrapperX<ApiDO>()
+                .eq(ApiDO::getApiPath, apiPath)
+                .eq(ApiDO::getHttpMethod, httpMethod));
     }
 
 }

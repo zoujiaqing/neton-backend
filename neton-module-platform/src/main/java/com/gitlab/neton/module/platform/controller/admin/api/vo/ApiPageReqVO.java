@@ -25,9 +25,6 @@ public class ApiPageReqVO extends PageParam {
     @Schema(description = "状态", example = "1")
     private Integer status;
 
-    @Schema(description = "是否公开")
-    private Boolean isPublic;
-
     @Schema(description = "创建时间")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime[] createTime;
