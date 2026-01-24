@@ -82,8 +82,8 @@
 
 | 文件路径 | 说明 |
 |---------|------|
-| `neton-framework/.../OpenApiAuthentication.java` | OpenAPI 认证对象 |
-| `neton-framework/.../OpenApiSignatureFilter.java` | 签名验证过滤器 |
+| `neton-framework/.../OpenApiAuthentication.java` | OpenAPI 认证对象（纯数据类） |
+| `neton-module-platform/.../OpenApiSignatureFilter.java` | 签名验证过滤器 |
 | `neton-module-platform/.../PlatformSecurityConfiguration.java` | Security 配置 |
 
 ### 业务接口层

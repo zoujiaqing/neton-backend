@@ -1,7 +1,7 @@
 package com.gitlab.neton.module.platform.framework.security.config;
 
 import com.gitlab.neton.framework.security.config.AuthorizeRequestsCustomizer;
-import com.gitlab.neton.framework.security.core.filter.OpenApiSignatureFilter;
+import com.gitlab.neton.module.platform.framework.security.filter.OpenApiSignatureFilter;
 import com.gitlab.neton.module.platform.service.auth.PlatformAuthService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;

@@ -1,4 +1,4 @@
-package com.gitlab.neton.framework.security.core.filter;
+package com.gitlab.neton.module.platform.framework.security.filter;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
