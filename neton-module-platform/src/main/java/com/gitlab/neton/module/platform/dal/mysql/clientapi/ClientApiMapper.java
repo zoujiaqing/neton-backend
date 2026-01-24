@@ -25,4 +25,13 @@ public interface ClientApiMapper extends BaseMapperX<ClientApiDO> {
                 .orderByDesc(ClientApiDO::getId));
     }
 
+    /**
+     * 根据 client_id 和 api_id 查询授权关系
+     */
+    default ClientApiDO selectByClientIdAndApiId(String clientId, Long apiId) {
+        return selectOne(new LambdaQueryWrapperX<ClientApiDO>()
+                .eq(ClientApiDO::getClientId, clientId)
+                .eq(ClientApiDO::getApiId, apiId));
+    }
+
 }

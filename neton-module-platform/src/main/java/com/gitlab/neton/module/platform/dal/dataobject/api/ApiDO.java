@@ -58,12 +58,6 @@ public class ApiDO extends BaseDO {
      */
     private Integer status;
     /**
-     * 是否公开
-     *
-     * 枚举 {@link TODO platform_bool 对应的类}
-     */
-    private Boolean isPublic;
-    /**
      * 每分钟限流
      */
     private Integer rateLimitPerMin;

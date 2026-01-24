@@ -31,4 +31,25 @@ public interface ClientMapper extends BaseMapperX<ClientDO> {
                 .orderByDesc(ClientDO::getId));
     }
 
+    /**
+     * 根据 client_id 查询客户端
+     */
+    default ClientDO selectByClientId(String clientId) {
+        return selectOne(ClientDO::getClientId, clientId);
+    }
+
+    /**
+     * 使用乐观锁更新余额
+     *
+     * @param clientId 客户端 ID
+     * @param currentBalance 当前余额
+     * @param amount 扣减金额
+     * @return 更新行数
+     */
+    @org.apache.ibatis.annotations.Update("UPDATE platform_client SET balance = balance - #{amount} " +
+            "WHERE client_id = #{clientId} AND balance = #{currentBalance}")
+    int updateBalanceWithOptimisticLock(@org.apache.ibatis.annotations.Param("clientId") String clientId,
+                                        @org.apache.ibatis.annotations.Param("currentBalance") Long currentBalance,
+                                        @org.apache.ibatis.annotations.Param("amount") Long amount);
+
 }
