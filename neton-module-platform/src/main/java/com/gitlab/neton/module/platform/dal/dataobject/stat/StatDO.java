@@ -1,11 +1,12 @@
 package com.gitlab.neton.module.platform.dal.dataobject.stat;
 
-import lombok.*;
-import java.util.*;
-import java.time.LocalDateTime;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.KeySequence;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.gitlab.neton.framework.mybatis.core.dataobject.BaseDO;
+import lombok.*;
+
+import java.time.LocalDate;
 
 /**
  * 开放平台统计 DO

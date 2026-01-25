@@ -10,20 +10,21 @@ import com.gitlab.neton.module.platform.controller.admin.client.vo.ClientRespVO;
 import com.gitlab.neton.module.platform.dal.dataobject.api.ApiDO;
 import com.gitlab.neton.module.platform.service.auth.PlatformAuthService;
 import com.gitlab.neton.module.platform.util.SignatureUtil;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.gitlab.neton.module.platform.enums.ErrorCodeConstants.*;
+import static com.gitlab.neton.module.platform.enums.ErrorCodeConstants.MISSING_HEADER;
+import static com.gitlab.neton.module.platform.enums.ErrorCodeConstants.PERMISSION_DENIED;
 
 /**
  * OpenAPI 签名验证过滤器
@@ -44,7 +45,7 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        
+
         // 只处理 /open-api/** 路径
         String requestUri = request.getRequestURI();
         if (!requestUri.startsWith("/open-api/")) {
@@ -59,7 +60,7 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
             String traceId = request.getHeader(SignatureUtil.HEADER_TRACE_ID);
             String sign = request.getHeader(SignatureUtil.HEADER_SIGN);
 
-            if (StrUtil.isBlank(clientId) || StrUtil.isBlank(timestampStr) 
+            if (StrUtil.isBlank(clientId) || StrUtil.isBlank(timestampStr)
                     || StrUtil.isBlank(traceId) || StrUtil.isBlank(sign)) {
                 log.warn("[OpenApiSignatureFilter] 缺少必填 Header：uri={}", requestUri);
                 handleError(response, MISSING_HEADER);
@@ -86,7 +87,7 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
             String requestIp = ServletUtils.getClientIP(request);
             boolean hasPermission = platformAuthService.hasApiPermission(clientId, api.getId(), requestIp);
             if (!hasPermission) {
-                log.warn("[OpenApiSignatureFilter] 权限不足：clientId={}, apiPath={}, apiId={}", 
+                log.warn("[OpenApiSignatureFilter] 权限不足：clientId={}, apiPath={}, apiId={}",
                         clientId, apiPath, api.getId());
                 handleError(response, PERMISSION_DENIED);
                 return;
@@ -104,7 +105,7 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
             request.setAttribute("PLATFORM_CLIENT", client);
             request.setAttribute("TRACE_ID", traceId);
 
-            log.info("[OpenApiSignatureFilter] 验证通过：clientId={}, apiCode={}, traceId={}", 
+            log.info("[OpenApiSignatureFilter] 验证通过：clientId={}, apiCode={}, traceId={}",
                     clientId, api.getApiCode(), traceId);
 
             // 9. 继续执行
@@ -124,8 +125,8 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
     /**
      * 收集所有参与签名的参数
      */
-    private Map<String, String> collectSignParams(HttpServletRequest request, 
-                                                   String clientId, Long timestamp, String traceId) {
+    private Map<String, String> collectSignParams(HttpServletRequest request,
+                                                  String clientId, Long timestamp, String traceId) {
         Map<String, String> params = new TreeMap<>();
 
         // 1. 添加鉴权 Header（转小写）
@@ -166,12 +167,12 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
     private void handleError(HttpServletResponse response, int code, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json;charset=UTF-8");
-        
+
         CommonResult<Void> result = CommonResult.error(code, message);
         response.getWriter().write(JSONUtil.toJsonStr(result));
     }
 
-    private void handleError(HttpServletResponse response, com.gitlab.neton.framework.common.exception.ErrorCode errorCode) 
+    private void handleError(HttpServletResponse response, com.gitlab.neton.framework.common.exception.ErrorCode errorCode)
             throws IOException {
         handleError(response, errorCode.getCode(), errorCode.getMsg());
     }

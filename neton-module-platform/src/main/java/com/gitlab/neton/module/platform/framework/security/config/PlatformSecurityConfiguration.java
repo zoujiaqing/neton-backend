@@ -3,13 +3,13 @@ package com.gitlab.neton.module.platform.framework.security.config;
 import com.gitlab.neton.framework.security.config.AuthorizeRequestsCustomizer;
 import com.gitlab.neton.module.platform.framework.security.filter.OpenApiSignatureFilter;
 import com.gitlab.neton.module.platform.service.auth.PlatformAuthService;
+import jakarta.annotation.Resource;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import javax.annotation.Resource;
 
 /**
  * Platform 模块的 Security 配置
@@ -43,7 +43,7 @@ public class PlatformSecurityConfiguration {
                 registry.requestMatchers("/open-api/**").permitAll();
             }
 
-            @Override
+            //            @Override
             public void customize(HttpSecurity httpSecurity) {
                 // 在 UsernamePasswordAuthenticationFilter 之前添加 OpenApiSignatureFilter
                 httpSecurity.addFilterBefore(openApiSignatureFilter, UsernamePasswordAuthenticationFilter.class);

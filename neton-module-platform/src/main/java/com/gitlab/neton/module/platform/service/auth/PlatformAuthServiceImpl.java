@@ -13,11 +13,11 @@ import com.gitlab.neton.module.platform.dal.mysql.client.ClientMapper;
 import com.gitlab.neton.module.platform.dal.mysql.clientapi.ClientApiMapper;
 import com.gitlab.neton.module.platform.enums.ClientStatusEnum;
 import com.gitlab.neton.module.platform.util.SignatureUtil;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -34,20 +34,16 @@ import static com.gitlab.neton.module.platform.enums.ErrorCodeConstants.*;
 @Slf4j
 public class PlatformAuthServiceImpl implements PlatformAuthService {
 
-    @Resource
-    private ClientMapper clientMapper;
-
-    @Resource
-    private ApiMapper apiMapper;
-
-    @Resource
-    private ClientApiMapper clientApiMapper;
-
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
-
     private static final String REDIS_KEY_REPLAY = "platform:replay:";
     private static final int REPLAY_TTL_SECONDS = 300;
+    @Resource
+    private ClientMapper clientMapper;
+    @Resource
+    private ApiMapper apiMapper;
+    @Resource
+    private ClientApiMapper clientApiMapper;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     public ClientRespVO validateSignature(String clientId, Long timestamp, String traceId,
@@ -88,7 +84,7 @@ public class PlatformAuthServiceImpl implements PlatformAuthService {
 
         // 7. 验证签名
         if (!SignatureUtil.verifySign(sign, serverSign)) {
-            log.warn("[validateSignature] 签名校验失败：clientId={}, clientSign={}, serverSign={}", 
+            log.warn("[validateSignature] 签名校验失败：clientId={}, clientSign={}, serverSign={}",
                     clientId, sign, serverSign);
             log.debug("[validateSignature] 签名原文参数：{}", allParams);
             throw new ServiceException(INVALID_SIGNATURE);
@@ -98,7 +94,7 @@ public class PlatformAuthServiceImpl implements PlatformAuthService {
         recordTraceId(clientId, traceId);
 
         log.info("[validateSignature] 签名验证成功：clientId={}, traceId={}", clientId, traceId);
-        
+
         return ClientConvert.INSTANCE.convert(client);
     }
 
@@ -113,7 +109,7 @@ public class PlatformAuthServiceImpl implements PlatformAuthService {
 
         // 2. 检查授权状态
         if (clientApi.getStatus() != 1) { // 1=正常
-            log.warn("[hasApiPermission] 授权已停用：clientId={}, apiId={}, status={}", 
+            log.warn("[hasApiPermission] 授权已停用：clientId={}, apiId={}, status={}",
                     clientId, apiId, clientApi.getStatus());
             return false;
         }
@@ -121,12 +117,12 @@ public class PlatformAuthServiceImpl implements PlatformAuthService {
         // 3. 检查授权时间范围
         LocalDateTime now = LocalDateTime.now();
         if (clientApi.getStartTime() != null && now.isBefore(clientApi.getStartTime())) {
-            log.warn("[hasApiPermission] 授权未开始：clientId={}, apiId={}, startTime={}", 
+            log.warn("[hasApiPermission] 授权未开始：clientId={}, apiId={}, startTime={}",
                     clientId, apiId, clientApi.getStartTime());
             return false;
         }
         if (clientApi.getEndTime() != null && now.isAfter(clientApi.getEndTime())) {
-            log.warn("[hasApiPermission] 授权已过期：clientId={}, apiId={}, endTime={}", 
+            log.warn("[hasApiPermission] 授权已过期：clientId={}, apiId={}, endTime={}",
                     clientId, apiId, clientApi.getEndTime());
             return false;
         }
@@ -136,7 +132,7 @@ public class PlatformAuthServiceImpl implements PlatformAuthService {
         if (client != null && StrUtil.isNotBlank(client.getAllowedIps())) {
             List<String> allowedIps = JSONUtil.toList(client.getAllowedIps(), String.class);
             if (!allowedIps.isEmpty() && !allowedIps.contains(requestIp)) {
-                log.warn("[hasApiPermission] IP 不在白名单中：clientId={}, apiId={}, requestIp={}, allowedIps={}", 
+                log.warn("[hasApiPermission] IP 不在白名单中：clientId={}, apiId={}, requestIp={}, allowedIps={}",
                         clientId, apiId, requestIp, allowedIps);
                 return false;
             }
@@ -153,14 +149,14 @@ public class PlatformAuthServiceImpl implements PlatformAuthService {
             log.warn("[getApiByPathAndMethod] 未找到匹配的 API：apiPath={}, httpMethod={}", apiPath, httpMethod);
             throw new ServiceException(API_NOT_FOUND);
         }
-        
+
         // 检查 API 状态
         if (api.getStatus() != 1) { // 1=正常
-            log.warn("[getApiByPathAndMethod] API 已停用：apiPath={}, httpMethod={}, status={}", 
+            log.warn("[getApiByPathAndMethod] API 已停用：apiPath={}, httpMethod={}, status={}",
                     apiPath, httpMethod, api.getStatus());
             throw new ServiceException(API_DISABLED);
         }
-        
+
         return api;
     }
 
@@ -168,7 +164,7 @@ public class PlatformAuthServiceImpl implements PlatformAuthService {
     public boolean isTraceIdDuplicated(String clientId, String traceId) {
         String key = REDIS_KEY_REPLAY + clientId + ":" + traceId;
         Boolean exists = stringRedisTemplate.hasKey(key);
-        return Boolean.TRUE.equals(exists);
+        return exists;
     }
 
     @Override

@@ -1,9 +1,11 @@
 package com.gitlab.neton.module.platform.controller.admin.stat.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import java.util.*;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+import java.time.LocalDate;
 
 @Schema(description = "管理后台 - 开放平台统计新增/修改 Request VO")
 @Data
