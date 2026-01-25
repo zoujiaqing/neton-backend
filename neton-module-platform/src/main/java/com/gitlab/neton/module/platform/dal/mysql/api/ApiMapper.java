@@ -1,13 +1,14 @@
 package com.gitlab.neton.module.platform.dal.mysql.api;
 
-import java.util.*;
-
 import com.gitlab.neton.framework.common.pojo.PageResult;
-import com.gitlab.neton.framework.mybatis.core.query.LambdaQueryWrapperX;
 import com.gitlab.neton.framework.mybatis.core.mapper.BaseMapperX;
+import com.gitlab.neton.framework.mybatis.core.query.LambdaQueryWrapperX;
+import com.gitlab.neton.module.platform.controller.admin.api.vo.ApiListReqVO;
+import com.gitlab.neton.module.platform.controller.admin.api.vo.ApiPageReqVO;
 import com.gitlab.neton.module.platform.dal.dataobject.api.ApiDO;
 import org.apache.ibatis.annotations.Mapper;
-import com.gitlab.neton.module.platform.controller.admin.api.vo.*;
+
+import java.util.List;
 
 /**
  * 开放平台API定义 Mapper
@@ -25,6 +26,12 @@ public interface ApiMapper extends BaseMapperX<ApiDO> {
                 .eqIfPresent(ApiDO::getStatus, reqVO.getStatus())
                 .betweenIfPresent(ApiDO::getCreateTime, reqVO.getCreateTime())
                 .orderByDesc(ApiDO::getId));
+    }
+
+    default List<ApiDO> selectList(ApiListReqVO reqVO) {
+        LambdaQueryWrapperX<ApiDO> apiDOLambdaQueryWrapperX = new LambdaQueryWrapperX<ApiDO>()
+                .likeIfPresent(ApiDO::getApiName, reqVO.getApiName());
+        return selectList(apiDOLambdaQueryWrapperX);
     }
 
     /**

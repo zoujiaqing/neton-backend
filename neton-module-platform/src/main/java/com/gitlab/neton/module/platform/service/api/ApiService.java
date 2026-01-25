@@ -1,11 +1,14 @@
 package com.gitlab.neton.module.platform.service.api;
 
-import java.util.*;
-import jakarta.validation.*;
-import com.gitlab.neton.module.platform.controller.admin.api.vo.*;
-import com.gitlab.neton.module.platform.dal.dataobject.api.ApiDO;
 import com.gitlab.neton.framework.common.pojo.PageResult;
-import com.gitlab.neton.framework.common.pojo.PageParam;
+import com.gitlab.neton.module.platform.controller.admin.api.vo.ApiListReqVO;
+import com.gitlab.neton.module.platform.controller.admin.api.vo.ApiListRespVO;
+import com.gitlab.neton.module.platform.controller.admin.api.vo.ApiPageReqVO;
+import com.gitlab.neton.module.platform.controller.admin.api.vo.ApiSaveReqVO;
+import com.gitlab.neton.module.platform.dal.dataobject.api.ApiDO;
+import jakarta.validation.Valid;
+
+import java.util.List;
 
 /**
  * 开放平台API定义 Service 接口
@@ -37,10 +40,10 @@ public interface ApiService {
     void deleteApi(Long id);
 
     /**
-    * 批量删除开放平台API定义
-    *
-    * @param ids 编号
-    */
+     * 批量删除开放平台API定义
+     *
+     * @param ids 编号
+     */
     void deleteApiListByIds(List<Long> ids);
 
     /**
@@ -58,5 +61,12 @@ public interface ApiService {
      * @return 开放平台API定义分页
      */
     PageResult<ApiDO> getApiPage(ApiPageReqVO pageReqVO);
+
+    /**
+     * 获得开放平台API定义分页
+     *
+     * @return 开放平台API定义列表
+     */
+    List<ApiListRespVO> getApiList(ApiListReqVO apiListReqVO);
 
 }

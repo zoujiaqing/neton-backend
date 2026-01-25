@@ -1,13 +1,12 @@
 package com.gitlab.neton.module.platform.dal.dataobject.clientapi;
 
-import lombok.*;
-import java.util.*;
-import java.time.LocalDateTime;
-import java.time.LocalDateTime;
-import java.time.LocalDateTime;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.KeySequence;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.gitlab.neton.framework.mybatis.core.dataobject.BaseDO;
+import lombok.*;
+
+import java.time.LocalDateTime;
 
 /**
  * 客户端-API授权关系表（含自定义定价） DO
@@ -39,10 +38,18 @@ public class ClientApiDO extends BaseDO {
     private Long apiId;
     /**
      * 是否启用
-     *
+     * <p>
      * 枚举 {@link TODO platform_bool 对应的类}
      */
     private Integer status;
+
+    /**
+     * 是否选中
+     * <p>
+     * 枚举 {@link TODO platform_bool 对应的类}
+     */
+    private Integer selected;
+
     /**
      * 每分钟限流（覆盖 API 默认配置）
      */
@@ -53,7 +60,7 @@ public class ClientApiDO extends BaseDO {
     private Integer rateLimitPerDay;
     /**
      * 是否自定义价格
-     *
+     * <p>
      * 枚举 {@link TODO platform_bool 对应的类}
      */
     private Boolean isCustomPrice;

@@ -1,24 +1,25 @@
 package com.gitlab.neton.module.platform.service.api;
 
-import cn.hutool.core.collection.CollUtil;
-import org.springframework.stereotype.Service;
-import jakarta.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
-import com.gitlab.neton.module.platform.controller.admin.api.vo.*;
-import com.gitlab.neton.module.platform.dal.dataobject.api.ApiDO;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.gitlab.neton.framework.common.enums.CustomizedStatusEnum;
 import com.gitlab.neton.framework.common.pojo.PageResult;
-import com.gitlab.neton.framework.common.pojo.PageParam;
 import com.gitlab.neton.framework.common.util.object.BeanUtils;
-
+import com.gitlab.neton.module.platform.controller.admin.api.vo.ApiListReqVO;
+import com.gitlab.neton.module.platform.controller.admin.api.vo.ApiListRespVO;
+import com.gitlab.neton.module.platform.controller.admin.api.vo.ApiPageReqVO;
+import com.gitlab.neton.module.platform.controller.admin.api.vo.ApiSaveReqVO;
+import com.gitlab.neton.module.platform.dal.dataobject.api.ApiDO;
+import com.gitlab.neton.module.platform.dal.dataobject.clientapi.ClientApiDO;
 import com.gitlab.neton.module.platform.dal.mysql.api.ApiMapper;
+import com.gitlab.neton.module.platform.dal.mysql.clientapi.ClientApiMapper;
+import jakarta.annotation.Resource;
+import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.List;
 
 import static com.gitlab.neton.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static com.gitlab.neton.framework.common.util.collection.CollectionUtils.convertList;
-import static com.gitlab.neton.framework.common.util.collection.CollectionUtils.diffList;
-import static com.gitlab.neton.module.platform.enums.ErrorCodeConstants.*;
+import static com.gitlab.neton.module.platform.enums.ErrorCodeConstants.API_NOT_EXISTS;
 
 /**
  * 开放平台API定义 Service 实现类
@@ -31,6 +32,9 @@ public class ApiServiceImpl implements ApiService {
 
     @Resource
     private ApiMapper apiMapper;
+
+    @Resource
+    private ClientApiMapper clientApiMapper;
 
     @Override
     public Long createApi(ApiSaveReqVO createReqVO) {
@@ -60,10 +64,10 @@ public class ApiServiceImpl implements ApiService {
     }
 
     @Override
-        public void deleteApiListByIds(List<Long> ids) {
+    public void deleteApiListByIds(List<Long> ids) {
         // 删除
         apiMapper.deleteByIds(ids);
-        }
+    }
 
 
     private void validateApiExists(Long id) {
@@ -80,6 +84,32 @@ public class ApiServiceImpl implements ApiService {
     @Override
     public PageResult<ApiDO> getApiPage(ApiPageReqVO pageReqVO) {
         return apiMapper.selectPage(pageReqVO);
+    }
+
+    @Override
+    public List<ApiListRespVO> getApiList(ApiListReqVO apiListReqVO) {
+
+        // 获取全量 API 列表
+        List<ApiDO> apiDOS = apiMapper.selectList(apiListReqVO);
+
+        List<ApiListRespVO> apiList = BeanUtils.toBean(apiDOS, ApiListRespVO.class);
+        // 获取客户端已使用列表
+        List<ClientApiDO> clientApiDOS = clientApiMapper.selectList(Wrappers.<ClientApiDO>lambdaQuery()
+                .eq(ClientApiDO::getClientId, apiListReqVO.getClientId())
+                .eq(ClientApiDO::getSelected, CustomizedStatusEnum.ENABLE.getStatus())
+        );
+        List<Long> selectedIdList = clientApiDOS.stream().map(ClientApiDO::getApiId).toList();
+
+        // 增加是否选中属性
+        apiList.stream().forEach(item -> {
+            if (selectedIdList.contains(item.getId())) {
+                item.setSelected(CustomizedStatusEnum.ENABLE.getStatus());
+            } else {
+                item.setSelected(CustomizedStatusEnum.DISABLE.getStatus());
+            }
+        });
+
+        return apiList;
     }
 
 }

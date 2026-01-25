@@ -1,11 +1,12 @@
 package com.gitlab.neton.module.platform.service.client;
 
-import java.util.*;
-import jakarta.validation.*;
-import com.gitlab.neton.module.platform.controller.admin.client.vo.*;
-import com.gitlab.neton.module.platform.dal.dataobject.client.ClientDO;
 import com.gitlab.neton.framework.common.pojo.PageResult;
-import com.gitlab.neton.framework.common.pojo.PageParam;
+import com.gitlab.neton.module.platform.controller.admin.client.vo.ClientPageReqVO;
+import com.gitlab.neton.module.platform.controller.admin.client.vo.ClientSaveReqVO;
+import com.gitlab.neton.module.platform.dal.dataobject.client.ClientDO;
+import jakarta.validation.Valid;
+
+import java.util.List;
 
 /**
  * 开放平台客户端 Service 接口
@@ -37,10 +38,10 @@ public interface ClientService {
     void deleteClient(Long id);
 
     /**
-    * 批量删除开放平台客户端
-    *
-    * @param ids 编号
-    */
+     * 批量删除开放平台客户端
+     *
+     * @param ids 编号
+     */
     void deleteClientListByIds(List<Long> ids);
 
     /**
@@ -50,6 +51,14 @@ public interface ClientService {
      * @return 开放平台客户端
      */
     ClientDO getClient(Long id);
+
+    /**
+     * 获得开放平台客户端
+     *
+     * @param appId 编号
+     * @return 开放平台客户端
+     */
+    ClientDO getClientByAppid(String appId);
 
     /**
      * 获得开放平台客户端分页

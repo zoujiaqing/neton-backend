@@ -1,24 +1,20 @@
 package com.gitlab.neton.module.platform.service.client;
 
-import cn.hutool.core.collection.CollUtil;
-import org.springframework.stereotype.Service;
-import jakarta.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
-import com.gitlab.neton.module.platform.controller.admin.client.vo.*;
-import com.gitlab.neton.module.platform.dal.dataobject.client.ClientDO;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.gitlab.neton.framework.common.pojo.PageResult;
-import com.gitlab.neton.framework.common.pojo.PageParam;
 import com.gitlab.neton.framework.common.util.object.BeanUtils;
-
+import com.gitlab.neton.module.platform.controller.admin.client.vo.ClientPageReqVO;
+import com.gitlab.neton.module.platform.controller.admin.client.vo.ClientSaveReqVO;
+import com.gitlab.neton.module.platform.dal.dataobject.client.ClientDO;
 import com.gitlab.neton.module.platform.dal.mysql.client.ClientMapper;
+import jakarta.annotation.Resource;
+import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.List;
 
 import static com.gitlab.neton.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static com.gitlab.neton.framework.common.util.collection.CollectionUtils.convertList;
-import static com.gitlab.neton.framework.common.util.collection.CollectionUtils.diffList;
-import static com.gitlab.neton.module.platform.enums.ErrorCodeConstants.*;
+import static com.gitlab.neton.module.platform.enums.ErrorCodeConstants.CLIENT_NOT_EXISTS;
 
 /**
  * 开放平台客户端 Service 实现类
@@ -60,10 +56,10 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-        public void deleteClientListByIds(List<Long> ids) {
+    public void deleteClientListByIds(List<Long> ids) {
         // 删除
         clientMapper.deleteByIds(ids);
-        }
+    }
 
 
     private void validateClientExists(Long id) {
@@ -75,6 +71,14 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public ClientDO getClient(Long id) {
         return clientMapper.selectById(id);
+    }
+
+    @Override
+    public ClientDO getClientByAppid(String appId) {
+        return clientMapper.selectOne(Wrappers.<ClientDO>lambdaQuery()
+                .eq(ClientDO::getClientId, appId)
+                .last("limit 1")
+        );
     }
 
     @Override

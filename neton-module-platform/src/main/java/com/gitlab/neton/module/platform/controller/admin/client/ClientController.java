@@ -1,40 +1,39 @@
 package com.gitlab.neton.module.platform.controller.admin.client;
 
-import org.springframework.web.bind.annotation.*;
-import jakarta.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.security.access.prepost.PreAuthorize;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.Operation;
-
-import jakarta.validation.constraints.*;
-import jakarta.validation.*;
-import jakarta.servlet.http.*;
-import java.util.*;
-import java.io.IOException;
-
+import com.gitlab.neton.framework.apilog.core.annotation.ApiAccessLog;
+import com.gitlab.neton.framework.common.pojo.CommonResult;
 import com.gitlab.neton.framework.common.pojo.PageParam;
 import com.gitlab.neton.framework.common.pojo.PageResult;
-import com.gitlab.neton.framework.common.pojo.CommonResult;
 import com.gitlab.neton.framework.common.util.object.BeanUtils;
-import static com.gitlab.neton.framework.common.pojo.CommonResult.success;
-
 import com.gitlab.neton.framework.excel.core.util.ExcelUtils;
-
-import com.gitlab.neton.framework.apilog.core.annotation.ApiAccessLog;
-import static com.gitlab.neton.framework.apilog.core.enums.OperateTypeEnum.*;
-
-import com.gitlab.neton.module.platform.controller.admin.client.vo.*;
+import com.gitlab.neton.module.platform.controller.admin.client.vo.ClientPageReqVO;
+import com.gitlab.neton.module.platform.controller.admin.client.vo.ClientRespVO;
+import com.gitlab.neton.module.platform.controller.admin.client.vo.ClientSaveReqVO;
 import com.gitlab.neton.module.platform.dal.dataobject.client.ClientDO;
 import com.gitlab.neton.module.platform.service.client.ClientService;
+import com.gitlab.neton.module.platform.util.AppCredentialGeneratorUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.util.List;
+
+import static com.gitlab.neton.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static com.gitlab.neton.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 开放平台客户端")
 @RestController
 @RequestMapping("/platform/client")
 @Validated
 public class ClientController {
-
+    
     @Resource
     private ClientService clientService;
 
@@ -65,7 +64,7 @@ public class ClientController {
     @DeleteMapping("/delete-list")
     @Parameter(name = "ids", description = "编号", required = true)
     @Operation(summary = "批量删除开放平台客户端")
-                @PreAuthorize("@ss.hasPermission('platform:client:delete')")
+    @PreAuthorize("@ss.hasPermission('platform:client:delete')")
     public CommonResult<Boolean> deleteClientList(@RequestParam("ids") List<Long> ids) {
         clientService.deleteClientListByIds(ids);
         return success(true);
@@ -93,12 +92,38 @@ public class ClientController {
     @PreAuthorize("@ss.hasPermission('platform:client:export')")
     @ApiAccessLog(operateType = EXPORT)
     public void exportClientExcel(@Valid ClientPageReqVO pageReqVO,
-              HttpServletResponse response) throws IOException {
+                                  HttpServletResponse response) throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<ClientDO> list = clientService.getClientPage(pageReqVO).getList();
         // 导出 Excel
         ExcelUtils.write(response, "开放平台客户端.xls", "数据", ClientRespVO.class,
-                        BeanUtils.toBean(list, ClientRespVO.class));
+                BeanUtils.toBean(list, ClientRespVO.class));
     }
+
+
+    @GetMapping("/generateAppId")
+    @Operation(summary = "生成APP凭证")
+    @PreAuthorize("isAuthenticated()")
+    public CommonResult<String> generateAppId() {
+
+        String appId = "";
+        while (true) {
+            appId = AppCredentialGeneratorUtil.generateAppId();
+            ClientDO clientByAppid = clientService.getClientByAppid(appId);
+            if (clientByAppid == null) {
+                break;
+            }
+        }
+
+        return success(appId);
+    }
+
+    @GetMapping("/generateAppSecret")
+    @Operation(summary = "生成APP凭证")
+    @PreAuthorize("isAuthenticated()")
+    public CommonResult<String> generateAppSecret() {
+        return success(AppCredentialGeneratorUtil.generateAppSecret());
+    }
+
 
 }

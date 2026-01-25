@@ -1,9 +1,9 @@
 package com.gitlab.neton.module.platform.controller.admin.api.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import java.util.*;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 @Schema(description = "管理后台 - 开放平台API定义新增/修改 Request VO")
 @Data
@@ -37,10 +37,6 @@ public class ApiSaveReqVO {
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @NotNull(message = "状态不能为空")
     private Integer status;
-
-    @Schema(description = "是否公开", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull(message = "是否公开不能为空")
-    private Boolean isPublic;
 
     @Schema(description = "每分钟限流", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "每分钟限流不能为空")
