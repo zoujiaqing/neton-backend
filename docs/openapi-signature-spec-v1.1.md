@@ -297,7 +297,7 @@ def calculate_sign(params: dict, app_secret: str) -> str:
 ### 9.1 请求示例
 
 ```http
-POST /open-api/order/create HTTP/1.1
+POST /platform-api/order/create HTTP/1.1
 Host: api.example.com
 Content-Type: application/json
 X-App-Id: app_123456
@@ -376,7 +376,7 @@ sign = HMAC_SHA256(签名原文, app_secret)
       "timestamp": 1704700000,
       "trace_id": "550e8400-e29b-41d4-a716-446655440000",
       "method": "POST",
-      "path": "/open-api/order/create",
+      "path": "/platform-api/order/create",
       "query": {},
       "body": {
         "order_no": "ORD20240108001",
@@ -392,7 +392,7 @@ sign = HMAC_SHA256(签名原文, app_secret)
       "timestamp": 1704700000,
       "trace_id": "550e8400-e29b-41d4-a716-446655440000",
       "method": "GET",
-      "path": "/open-api/order/query",
+      "path": "/platform-api/order/query",
       "query": {
         "page": "1",
         "size": "10"
@@ -408,7 +408,7 @@ sign = HMAC_SHA256(签名原文, app_secret)
       "timestamp": 1704700000,
       "trace_id": "550e8400-e29b-41d4-a716-446655440000",
       "method": "POST",
-      "path": "/open-api/user/create",
+      "path": "/platform-api/user/create",
       "query": {},
       "body": {
         "user": {
@@ -502,11 +502,11 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-public class OpenApiSigner {
+public class PlatformApiSigner {
     private final String appId;
     private final String appSecret;
 
-    public OpenApiSigner(String appId, String appSecret) {
+    public PlatformApiSigner(String appId, String appSecret) {
         this.appId = appId;
         this.appSecret = appSecret;
     }
@@ -604,7 +604,7 @@ import uuid
 from typing import Dict, Any, List
 from collections import OrderedDict
 
-class OpenApiSigner:
+class PlatformApiSigner:
     def __init__(self, app_id: str, app_secret: str):
         self.app_id = app_id
         self.app_secret = app_secret
@@ -666,7 +666,7 @@ class OpenApiSigner:
             result[prefix] = str(obj)
 
 # 使用示例
-signer = OpenApiSigner('app_123456', 'secret_abc123')
+signer = PlatformApiSigner('app_123456', 'secret_abc123')
 headers = signer.sign({
     'order_no': 'ORD20240108001',
     'amount': 100

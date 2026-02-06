@@ -224,7 +224,7 @@ CREATE TABLE `platform_api` (
     -- API 标识
     `api_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'API 编码（权限标识格式：platform:资源:操作，如：platform:order:create）',
     `api_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'API 名称',
-    `api_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'API 路径（业务路径，如：/order/create，不包含 /open-api 前缀）',
+    `api_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'API 路径（业务路径，如：/order/create，不包含 /platform-api 前缀）',
     `http_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'HTTP 方法（GET/POST/PUT/DELETE）',
     
     -- 分类与描述
@@ -461,7 +461,7 @@ CREATE TABLE `platform_stat` (
 ```java
 // Controller 示例：可以直接使用 api_code 进行权限检查
 @RestController
-@RequestMapping("/open-api/order")
+@RequestMapping("/platform-api/order")
 public class PlatformOrderController {
     
     /**
@@ -653,7 +653,7 @@ public boolean hasApiPermission(String clientId, String apiPath, String httpMeth
 ```java
 // 接收请求路径（可能来自多种方式）
 // 方式1: 域名映射 - api.xxx.com/order/create
-// 方式2: 路由前缀 - xxx.com/open-api/order/create
+// 方式2: 路由前缀 - xxx.com/platform-api/order/create
 String requestPath = request.getRequestURI();  // 例如: "/order/create"
 
 // 直接使用请求路径在 platform_api 表中查询
@@ -661,7 +661,7 @@ PlatformApiDO api = platformApiMapper.selectByPathAndMethod(requestPath, "POST")
 ```
 
 **为什么这样设计**：
-1. ✅ **适配多种访问方式**：域名映射（`api.xxx.com`）或路由前缀（`/open-api`）
+1. ✅ **适配多种访问方式**：域名映射（`api.xxx.com`）或路由前缀（`/platform-api`）
 2. ✅ **数据库数据简洁**：只存储业务路径
 3. ✅ **灵活性更高**：部署方式改变不影响数据
 
@@ -670,7 +670,7 @@ PlatformApiDO api = platformApiMapper.selectByPathAndMethod(requestPath, "POST")
 | 访问方式 | 客户端请求 | 路径匹配 |
 |---------|----------|---------|
 | 域名映射 | `POST api.xxx.com/order/create` | `/order/create` ✅ |
-| 路由前缀 | `POST xxx.com/open-api/order/create` | 需去除前缀 `/open-api` |
+| 路由前缀 | `POST xxx.com/platform-api/order/create` | 需去除前缀 `/platform-api` |
 | 子路径 | `POST xxx.com/v1/order/create` | 需去除前缀 `/v1` |
 
 **推荐部署方式**：域名映射，客户端直接请求 `api.xxx.com/order/create`，服务端无需处理前缀。
@@ -680,7 +680,7 @@ PlatformApiDO api = platformApiMapper.selectByPathAndMethod(requestPath, "POST")
 **权限校验流程图**：
 
 ```
-请求 /order/create (或 /open-api/order/create)
+请求 /order/create (或 /platform-api/order/create)
     ↓
 [1] API 是否在 platform_api 中？
     ├─ 否 → ❌ 返回 404 API_NOT_FOUND
@@ -740,7 +740,7 @@ X-Sign: 3a8f5e7d9b2c1a4f6e8d7c5b3a9f1e2d4c6b8a7f5e3d1c9b7a5f3e1d9c7b5a3f
 **方式2：路由前缀（可选）**
 
 ```http
-POST /open-api/order/create HTTP/1.1
+POST /platform-api/order/create HTTP/1.1
 Host: www.example.com
 Content-Type: application/json
 X-Client-Id: client_123456
@@ -810,7 +810,7 @@ VALUES ('client_B', 1, 0, NULL, 1);  -- 使用默认10分，状态正常
 
 **说明**：
 - API 路径存储格式：`/order/create`（业务路径）
-- 客户端请求可以是：`api.xxx.com/order/create` 或 `xxx.com/open-api/order/create`
+- 客户端请求可以是：`api.xxx.com/order/create` 或 `xxx.com/platform-api/order/create`
 - 推荐使用域名映射方式，简化客户端调用
 
 ---
@@ -869,8 +869,8 @@ VALUES ('client_B', 1, 0, NULL, 1);  -- 使用默认10分，状态正常
 ### Phase 3：框架层扩展（1 小时）
 
 1. 扩展 `UserTypeEnum`（增加 OPEN）
-2. 扩展 `WebProperties`（增加 openApi 配置）
-3. 扩展 `WebFrameworkUtils`（增加 /open-api 识别）
+2. 扩展 `WebProperties`（增加 platformApi 配置）
+3. 扩展 `WebFrameworkUtils`（增加 /platform-api 识别）
 4. 扩展 `NetonWebAutoConfiguration`（注册路由前缀）
 
 ---

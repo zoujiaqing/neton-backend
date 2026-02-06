@@ -139,7 +139,7 @@ mvn spring-boot:run
 import com.gitlab.neton.module.platform.util.SignatureUtil;
 import java.util.*;
 
-public class OpenApiClient {
+public class PlatformApiClient {
     public static void main(String[] args) throws Exception {
         String clientId = "test_client_001";
         String clientSecret = "test_secret_001";

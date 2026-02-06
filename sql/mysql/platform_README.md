@@ -97,8 +97,8 @@ SELECT COUNT(*) FROM platform_client_api;
 
 | 客户端 | API | 价格 | 说明 |
 |-------|-----|------|------|
-| client_demo_001 | /open-api/order/create | 5 分 | 自定义价格（VIP） |
-| client_demo_002 | /open-api/order/create | 10 分 | 默认价格（普通） |
+| client_demo_001 | /platform-api/order/create | 5 分 | 自定义价格（VIP） |
+| client_demo_002 | /platform-api/order/create | 10 分 | 默认价格（普通） |
 
 ### 3. IP 白名单
 
@@ -136,7 +136,7 @@ allowed_ips = '["192.168.1.100","192.168.1.101"]'
 
 **访问方式**：
 - **推荐**：域名映射 `POST api.xxx.com/order/create`
-- **也可以**：路由前缀 `POST xxx.com/open-api/order/create`（需配置路由映射）
+- **也可以**：路由前缀 `POST xxx.com/platform-api/order/create`（需配置路由映射）
 
 ### 授权关系
 
