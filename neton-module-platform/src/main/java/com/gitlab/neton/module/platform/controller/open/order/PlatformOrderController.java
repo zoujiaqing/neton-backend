@@ -23,7 +23,7 @@ import static com.gitlab.neton.framework.common.pojo.CommonResult.success;
  */
 @Tag(name = "开放平台 - 订单接口")
 @RestController
-@RequestMapping("/open-api/order")
+@RequestMapping("/platform-api/order")
 @Validated
 @Slf4j
 public class PlatformOrderController {
@@ -38,14 +38,14 @@ public class PlatformOrderController {
     @PreAuthorize("@ss.hasPermission('platform:order:query')")
     public CommonResult<OrderRespVO> queryOrder(@Validated OrderQueryReqVO reqVO) {
         log.info("[queryOrder] 查询订单：orderNo={}", reqVO.getOrderNo());
-        
+
         // TODO: 实际业务逻辑（查询数据库）
         OrderRespVO resp = new OrderRespVO();
         resp.setOrderNo(reqVO.getOrderNo());
         resp.setAmount(10000L);
         resp.setStatus(1);
         resp.setCreateTime(LocalDateTime.now());
-        
+
         return success(resp);
     }
 
@@ -59,7 +59,7 @@ public class PlatformOrderController {
     @PreAuthorize("@ss.hasPermission('platform:order:create')")
     public CommonResult<Long> createOrder(@RequestBody @Validated Object reqVO) {
         log.info("[createOrder] 创建订单：reqVO={}", reqVO);
-        
+
         // TODO: 实际业务逻辑（创建订单）
         return success(System.currentTimeMillis());
     }

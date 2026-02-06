@@ -10,8 +10,8 @@
 | 1.1 | 枚举类 | ✅ | ClientStatusEnum, ClientTypeEnum, ChargeTypeEnum, ChargeStatusEnum, ErrorCodeConstants |
 | 1.2 | 签名工具类 | ✅ | SignatureUtil（HMAC-SHA256、参数展开、时间戳验证） |
 | 1.3 | 鉴权服务 | ✅ | PlatformAuthService + Impl（签名验证、权限检查、防重放） |
-| 1.4 | 认证对象 | ✅ | OpenApiAuthentication（Spring Security 集成） |
-| 1.5 | 签名过滤器 | ✅ | OpenApiSignatureFilter（拦截 `/open-api/**`） |
+| 1.4 | 认证对象 | ✅ | PlatformApiAuthentication（Spring Security 集成） |
+| 1.5 | 签名过滤器 | ✅ | PlatformApiSignatureFilter（拦截 `/platform-api/**`） |
 | 1.6 | Security 配置 | ✅ | PlatformSecurityConfiguration（注册过滤器） |
 | **Phase 2** | **计费系统** | ✅ | **完整计费** |
 | 2.1 | 计费服务 | ✅ | PlatformChargeService + Impl |
@@ -27,13 +27,13 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                      第三方客户端请求                              │
-│         POST /open-api/order/create                              │
+│         POST /platform-api/order/create                              │
 │         Headers: X-Client-Id, X-Timestamp, X-Trace-Id, X-Sign    │
 └──────────────────────────┬──────────────────────────────────────┘
                            │
                            ↓
         ┌──────────────────────────────────────────────┐
-        │   OpenApiSignatureFilter（签名验证过滤器）     │
+        │   PlatformApiSignatureFilter（签名验证过滤器）     │
         │   1. 验证时间戳（±300秒）                     │
         │   2. 检查 Trace-Id 重复（Redis）              │
         │   3. 查询客户端信息                           │
@@ -41,7 +41,7 @@
         │   5. 查找 API 信息                            │
         │   6. 检查权限（白名单机制）                   │
         │   7. 检查 IP 白名单                           │
-        │   8. 构建 OpenApiAuthentication              │
+        │   8. 构建 PlatformApiAuthentication              │
         └──────────────────────────────────────────────┘
                            │
                            ↓
@@ -82,8 +82,8 @@
 
 | 文件路径 | 说明 |
 |---------|------|
-| `neton-framework/.../OpenApiAuthentication.java` | OpenAPI 认证对象（纯数据类） |
-| `neton-module-platform/.../OpenApiSignatureFilter.java` | 签名验证过滤器 |
+| `neton-framework/.../PlatformApiAuthentication.java` | Platform API 认证对象（纯数据类） |
+| `neton-module-platform/.../PlatformApiSignatureFilter.java` | 签名验证过滤器 |
 | `neton-module-platform/.../PlatformSecurityConfiguration.java` | Security 配置 |
 
 ### 业务接口层
@@ -121,7 +121,7 @@ cd backend/neton-server
 mvn spring-boot:run
 ```
 
-### 3. 测试 OpenAPI 接口
+### 3. 测试 Platform API 接口
 
 #### 3.1 准备测试数据
 
@@ -143,7 +143,7 @@ public class OpenApiClient {
     public static void main(String[] args) throws Exception {
         String clientId = "test_client_001";
         String clientSecret = "test_secret_001";
-        String apiUrl = "http://localhost:8080/open-api/order/query";
+        String apiUrl = "http://localhost:8080/platform-api/order/query";
         
         // 1. 准备参数
         Map<String, String> params = new TreeMap<>();
@@ -177,14 +177,14 @@ public class OpenApiClient {
 
 ```bash
 # 查询订单
-curl -X GET "http://localhost:8080/open-api/order/query?orderNo=ORD20240108001" \
+curl -X GET "http://localhost:8080/platform-api/order/query?orderNo=ORD20240108001" \
   -H "X-Client-Id: test_client_001" \
   -H "X-Timestamp: $(date +%s)" \
   -H "X-Trace-Id: $(uuidgen)" \
   -H "X-Sign: <计算的签名>"
 
 # 创建订单
-curl -X POST "http://localhost:8080/open-api/order/create" \
+curl -X POST "http://localhost:8080/platform-api/order/create" \
   -H "Content-Type: application/json" \
   -H "X-Client-Id: test_client_001" \
   -H "X-Timestamp: $(date +%s)" \
@@ -236,7 +236,7 @@ curl -X POST "http://localhost:8080/open-api/order/create" \
 
 1. **实现日志记录**：创建 `PlatformLogService` 异步记录请求日志
 2. **实现限流**：基于 Redis 的客户端级和 API 级限流
-3. **错误响应标准化**：统一 OpenAPI 错误响应格式
+3. **错误响应标准化**：统一 Platform API 错误响应格式
 4. **余额预警**：当余额低于阈值时发送通知
 
 ### 中优先级
@@ -248,7 +248,7 @@ curl -X POST "http://localhost:8080/open-api/order/create" \
 ### 低优先级
 
 8. **Webhook 通知**：余额不足、授权过期等事件通知
-9. **API 文档生成**：基于 `platform_api` 表自动生成 OpenAPI 文档
+9. **API 文档生成**：基于 `platform_api` 表自动生成 Platform API 文档
 10. **多版本支持**：支持签名算法版本升级（v2.0: RSA）
 
 ---
@@ -280,7 +280,7 @@ curl -X POST "http://localhost:8080/open-api/order/create" \
 ## 📚 相关文档
 
 - [开放平台模块设计方案](PLATFORM_MODULE_DESIGN.md)
-- [OpenAPI 签名规范 v1.1](openapi-signature-spec-v1.1.md)
+- [Platform API 签名规范 v1.1](openapi-signature-spec-v1.1.md)
 - [数据库表结构](../sql/mysql/platform.sql)
 - [测试数据](../sql/mysql/platform_test_data.sql)
 
@@ -294,7 +294,7 @@ curl -X POST "http://localhost:8080/open-api/order/create" \
 2. ✅ **计费系统**（Phase 2）- 支持自定义定价、乐观锁扣减
 3. ✅ **示例业务接口**（Phase 3）- 演示如何使用 `@PreAuthorize` 集成
 
-**现在可以启动应用并测试 OpenAPI 功能！** 🚀
+**现在可以启动应用并测试 Platform API 功能！** 🚀
 
 ---
 

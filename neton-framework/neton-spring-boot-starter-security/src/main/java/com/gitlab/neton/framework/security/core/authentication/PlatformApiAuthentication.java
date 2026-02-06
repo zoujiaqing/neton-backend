@@ -8,7 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import java.util.Collection;
 
 /**
- * OpenAPI 认证对象
+ * Platform API 认证对象
  * <p>
  * 用于存储开放平台客户端认证信息，包括 client_id 和 api_code
  *
@@ -16,7 +16,7 @@ import java.util.Collection;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class OpenApiAuthentication extends AbstractAuthenticationToken {
+public class PlatformApiAuthentication extends AbstractAuthenticationToken {
 
     /**
      * 客户端 ID（对应 principal）
@@ -49,7 +49,7 @@ public class OpenApiAuthentication extends AbstractAuthenticationToken {
      * @param clientId 客户端 ID
      * @param apiCode API 编码
      */
-    public OpenApiAuthentication(String clientId, String apiCode) {
+    public PlatformApiAuthentication(String clientId, String apiCode) {
         super(null);
         this.clientId = clientId;
         this.apiCode = apiCode;
@@ -63,7 +63,7 @@ public class OpenApiAuthentication extends AbstractAuthenticationToken {
      * @param apiCode API 编码
      * @param authorities 权限集合
      */
-    public OpenApiAuthentication(String clientId, String apiCode, Collection<? extends GrantedAuthority> authorities) {
+    public PlatformApiAuthentication(String clientId, String apiCode, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.clientId = clientId;
         this.apiCode = apiCode;
@@ -72,7 +72,7 @@ public class OpenApiAuthentication extends AbstractAuthenticationToken {
 
     @Override
     public Object getCredentials() {
-        return null; // OpenAPI 不使用密码凭证
+        return null; // Platform API 不使用密码凭证
     }
 
     @Override

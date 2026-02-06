@@ -489,7 +489,7 @@ public class PlatformOrderController {
 **权限校验流程**：
 
 ```java
-// OpenApiSignatureFilter 中
+// PlatformApiSignatureFilter 中
 public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
     // 1. 验证签名（client_id + client_secret）
     validateSignature(request);
@@ -507,7 +507,7 @@ public void doFilter(ServletRequest request, ServletResponse response, FilterCha
     // 4. 将 api_code 存入 SecurityContext，供 @PreAuthorize 使用
     // 这样可以统一使用 @PreAuthorize("@ss.hasPermission('platform:order:create')")
     SecurityContextHolder.getContext().setAuthentication(
-        new OpenApiAuthentication(clientId, api.getApiCode())
+        new PlatformApiAuthentication(clientId, api.getApiCode())
     );
     
     // 5. 计费（如需要）
@@ -877,7 +877,7 @@ VALUES ('client_B', 1, 0, NULL, 1);  -- 使用默认10分，状态正常
 
 ### Phase 4：Security 层实现（2 小时）
 
-1. 创建 `OpenApiSignatureFilter`
+1. 创建 `PlatformApiSignatureFilter`
 2. 实现签名验证（使用 client_id + client_secret）
 3. **实现 API 权限校验（白名单机制）** ⭐
    - 检查 API 是否在 platform_api 中定义

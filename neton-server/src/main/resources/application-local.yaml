@@ -1,6 +1,5 @@
 server:
   port: 8088
-
 --- #################### 数据库相关配置 ####################
 spring:
   autoconfigure:
@@ -47,20 +46,14 @@ spring:
       primary: master
       datasource:
         master:
-          url: jdbc:mysql://10.126.126.5:3306/ruoyi-vue-pro?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true # MySQL Connector/J 8.X 连接的示例
-          username: ruoyi-vue-pro
-          password: 53X3ed2Yy2Xz6t6Y
-          #          username: sa # SQL Server 连接的示例
-          #          password: Neton@2024 # SQL Server 连接的示例
-          #          username: SYSDBA # DM 连接的示例
-          #          password: SYSDBA001 # DM 连接的示例
-          #          username: root # OpenGauss 连接的示例
-          #          password: Neton@2024 # OpenGauss 连接的示例
+          url: jdbc:mysql://localhost:3306/livestreaming?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true
+          username: root
+          password: 123456
         slave: # 模拟从库，可根据自己需要修改
           lazy: true # 开启懒加载，保证启动速度
-          url: jdbc:mysql://10.126.126.5:3306/ruoyi-vue-pro?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true # MySQL Connector/J 8.X 连接的示例
-          username: ruoyi-vue-pro
-          password: 53X3ed2Yy2Xz6t6Y
+          url: jdbc:mysql://localhost:3306/livestreaming?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true
+          username: root
+          password: 123456
   #        tdengine: # IoT 数据库（需要 IoT 物联网再开启噢！）
   #          url: jdbc:TAOS-WS://127.0.0.1:6041/ruoyi_vue_pro
   #          driver-class-name: com.taosdata.jdbc.ws.WebSocketDriver
@@ -72,11 +65,10 @@ spring:
   # Redis 配置。Redisson 默认的配置足够使用，一般不需要进行调优
   data:
     redis:
-      host: 10.126.126.5 # 地址
+      host: localhost # 地址
       port: 6379 # 端口
-      database: 1 # 数据库索引
-      password: 123456 # 密码，建议生产环境开启
-
+      # database:  # 数据库索引
+      # password: 123456 # 密码，建议生产环境开启
 --- #################### 定时任务相关配置 ####################
 
 # Quartz 配置项，对应 QuartzProperties 配置类
@@ -140,7 +132,7 @@ management:
     web:
       base-path: /actuator # Actuator 提供的 API 接口的根目录。默认为 /actuator
       exposure:
-        include: '*' # 需要开放的端点。默认值只打开 health 和 info 两个端点。通过设置 * ，可以开放所有端点。
+        include: "*" # 需要开放的端点。默认值只打开 health 和 info 两个端点。通过设置 * ，可以开放所有端点。
 
 # Spring Boot Admin 配置项
 spring:
@@ -213,7 +205,6 @@ wx:
       type: RedisTemplate # 采用 RedisTemplate 操作 Redis，会自动从 Spring 中获取
       key-prefix: wa # Redis Key 的前缀
       http-client-type: HttpClient # 采用 HttpClient 请求微信公众号平台
-
 --- #################### Neton相关配置 ####################
 
 # Neton配置项，设置当前项目所有自定义的配置
@@ -265,5 +256,5 @@ justauth:
       ignore-check-state: true
   cache:
     type: REDIS
-    prefix: 'social_auth_state:' # 缓存前缀，目前只对 Redis 缓存生效，默认 JUSTAUTH::STATE::
+    prefix: "social_auth_state:" # 缓存前缀，目前只对 Redis 缓存生效，默认 JUSTAUTH::STATE::
     timeout: 24h # 超时时长，目前只对 Redis 缓存生效，默认 3 分钟

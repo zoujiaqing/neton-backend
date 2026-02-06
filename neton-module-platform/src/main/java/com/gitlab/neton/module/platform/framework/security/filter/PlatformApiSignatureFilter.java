@@ -5,7 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.gitlab.neton.framework.common.exception.ServiceException;
 import com.gitlab.neton.framework.common.pojo.CommonResult;
 import com.gitlab.neton.framework.common.util.servlet.ServletUtils;
-import com.gitlab.neton.framework.security.core.authentication.OpenApiAuthentication;
+import com.gitlab.neton.framework.security.core.authentication.PlatformApiAuthentication;
 import com.gitlab.neton.module.platform.controller.admin.client.vo.ClientRespVO;
 import com.gitlab.neton.module.platform.dal.dataobject.api.ApiDO;
 import com.gitlab.neton.module.platform.service.auth.PlatformAuthService;
@@ -27,18 +27,18 @@ import static com.gitlab.neton.module.platform.enums.ErrorCodeConstants.MISSING_
 import static com.gitlab.neton.module.platform.enums.ErrorCodeConstants.PERMISSION_DENIED;
 
 /**
- * OpenAPI 签名验证过滤器
+ * Platform API 签名验证过滤器
  * <p>
- * 拦截 /open-api/** 请求，验证签名和权限
+ * 拦截 /platform-api/** 请求，验证签名和权限
  *
  * @author Neton
  */
 @Slf4j
-public class OpenApiSignatureFilter extends OncePerRequestFilter {
+public class PlatformApiSignatureFilter extends OncePerRequestFilter {
 
     private final PlatformAuthService platformAuthService;
 
-    public OpenApiSignatureFilter(PlatformAuthService platformAuthService) {
+    public PlatformApiSignatureFilter(PlatformAuthService platformAuthService) {
         this.platformAuthService = platformAuthService;
     }
 
@@ -46,9 +46,9 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        // 只处理 /open-api/** 路径
+        // 只处理 /platform-api/** 路径
         String requestUri = request.getRequestURI();
-        if (!requestUri.startsWith("/open-api/")) {
+        if (!requestUri.startsWith("/platform-api/")) {
             chain.doFilter(request, response);
             return;
         }
@@ -62,7 +62,7 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
 
             if (StrUtil.isBlank(clientId) || StrUtil.isBlank(timestampStr)
                     || StrUtil.isBlank(traceId) || StrUtil.isBlank(sign)) {
-                log.warn("[OpenApiSignatureFilter] 缺少必填 Header：uri={}", requestUri);
+                log.warn("[PlatformApiSignatureFilter] 缺少必填 Header：uri={}", requestUri);
                 handleError(response, MISSING_HEADER);
                 return;
             }
@@ -76,8 +76,8 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
             ClientRespVO client = platformAuthService.validateSignature(
                     clientId, timestamp, traceId, sign, allParams);
 
-            // 4. 提取业务路径（去除 /open-api 前缀）
-            String apiPath = requestUri.substring("/open-api".length());
+            // 4. 提取业务路径（去除 /platform-api 前缀）
+            String apiPath = requestUri.substring("/platform-api".length());
             String httpMethod = request.getMethod();
 
             // 5. 查找 API
@@ -87,14 +87,14 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
             String requestIp = ServletUtils.getClientIP(request);
             boolean hasPermission = platformAuthService.hasApiPermission(clientId, api.getId(), requestIp);
             if (!hasPermission) {
-                log.warn("[OpenApiSignatureFilter] 权限不足：clientId={}, apiPath={}, apiId={}",
+                log.warn("[PlatformApiSignatureFilter] 权限不足：clientId={}, apiPath={}, apiId={}",
                         clientId, apiPath, api.getId());
                 handleError(response, PERMISSION_DENIED);
                 return;
             }
 
             // 7. 构建认证对象并存入 SecurityContext
-            OpenApiAuthentication authentication = new OpenApiAuthentication(clientId, api.getApiCode());
+            PlatformApiAuthentication authentication = new PlatformApiAuthentication(clientId, api.getApiCode());
             authentication.setClientName(client.getClientName());
             authentication.setTraceId(traceId);
             authentication.setRequestIp(requestIp);
@@ -105,17 +105,17 @@ public class OpenApiSignatureFilter extends OncePerRequestFilter {
             request.setAttribute("PLATFORM_CLIENT", client);
             request.setAttribute("TRACE_ID", traceId);
 
-            log.info("[OpenApiSignatureFilter] 验证通过：clientId={}, apiCode={}, traceId={}",
+            log.info("[PlatformApiSignatureFilter] 验证通过：clientId={}, apiCode={}, traceId={}",
                     clientId, api.getApiCode(), traceId);
 
             // 9. 继续执行
             chain.doFilter(request, response);
 
         } catch (ServiceException e) {
-            log.warn("[OpenApiSignatureFilter] 验证失败：uri={}, error={}", requestUri, e.getMessage());
+            log.warn("[PlatformApiSignatureFilter] 验证失败：uri={}, error={}", requestUri, e.getMessage());
             handleError(response, e.getCode(), e.getMessage());
         } catch (Exception e) {
-            log.error("[OpenApiSignatureFilter] 处理异常：uri={}", requestUri, e);
+            log.error("[PlatformApiSignatureFilter] 处理异常：uri={}", requestUri, e);
             handleError(response, 500, "服务器内部错误");
         } finally {
             SecurityContextHolder.clearContext();
